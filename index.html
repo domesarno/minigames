@@ -3,56 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>234 Player Hub - Tanks</title>
+    <title>234 Player Hub - Tanks Battleground</title>
     <style>
-        body {
-            margin: 0; padding: 0; background-color: #1a1a2e; color: white;
-            display: flex; justify-content: center; align-items: center;
-            height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; /* Disabilita del tutto lo zoom e lo scroll nativo */
-        }
-        /* Il container mantiene le proporzioni del gioco */
-        #game-container {
-            position: relative;
-            width: 100vw; height: 100vh;
-            max-width: 1024px; max-height: 768px;
-            box-shadow: 0 0 50px rgba(0,0,0,0.8);
-        }
-        canvas {
-            width: 100%; height: 100%; background-color: #2c3e50;
-            display: block; border-radius: 10px;
-        }
-        
-        /* UI Sovrapposta in HTML per il Menu e Punteggi */
-        #ui-layer {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; /* Lascia passare i tocchi al canvas */
-            display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .score-board {
-            display: flex; justify-content: space-between; padding: 20px 40px;
-            font-size: 32px; font-weight: 900; text-shadow: 2px 2px 4px #000;
-        }
-        #p1-score-text { color: #ff4757; }
-        #p2-score-text { color: #1e90ff; }
-        
-        /* Menu e Game Over */
-        .overlay-screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(26, 26, 46, 0.9); pointer-events: auto;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.3s;
-        }
+        body { margin: 0; padding: 0; background-color: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; touch-action: none; }
+        #game-container { position: relative; width: 100vw; height: 100vh; max-width: 1024px; max-height: 768px; box-shadow: 0 0 50px rgba(0,0,0,0.8); background-color: #4a6fa5; }
+        canvas { width: 100%; height: 100%; display: block; border-radius: 10px; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
+        .score-board { display: flex; justify-content: space-between; padding: 20px 40px; font-size: 32px; font-weight: 900; text-shadow: 2px 2px 4px #000; }
+        #p1-score-text { color: #ff4757; } #p2-score-text { color: #1e90ff; }
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 46, 0.9); pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
         .hidden { opacity: 0; pointer-events: none !important; }
-        
         h1 { font-size: 60px; margin: 0 0 20px 0; text-transform: uppercase; letter-spacing: 2px; }
         h2 { color: #f1c40f; margin-bottom: 40px; }
-        button {
-            padding: 15px 40px; font-size: 24px; font-weight: bold; color: white;
-            background: #2ed573; border: none; border-radius: 50px; cursor: pointer;
-            box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4); text-transform: uppercase;
-            transition: transform 0.1s;
-        }
+        button { padding: 15px 40px; font-size: 24px; font-weight: bold; color: white; background: #2ed573; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4); text-transform: uppercase; transition: transform 0.1s; }
         button:active { transform: scale(0.95); }
     </style>
 </head>
@@ -61,7 +24,6 @@
     <div id="game-container">
         <canvas id="gameCanvas" width="1024" height="768"></canvas>
         
-        <!-- Punteggi in Gioco -->
         <div id="ui-layer" class="hidden">
             <div class="score-board">
                 <span id="p1-score-text">P1: <span id="s1">0</span>/3</span>
@@ -69,16 +31,15 @@
             </div>
         </div>
 
-        <!-- Menu Principale -->
         <div id="menu-screen" class="overlay-screen">
             <h1>Mini Games Hub</h1>
             <h2>Seleziona un Gioco</h2>
-            <button onclick="startGame()" ontouchstart="startGame(); event.preventDefault();">Tanks (2 Player)</button>        </div>
+            <button onclick="startGame()" ontouchstart="startGame(); event.preventDefault();">Tanks (2 Player)</button>
+        </div>
 
-        <!-- Schermata Vittoria -->
         <div id="gameover-screen" class="overlay-screen hidden">
             <h1 id="winner-text">P1 VINCE!</h1>
-            <button onclick="backToMenu()">Torna al Menu</button>
+            <button onclick="backToMenu()" ontouchstart="backToMenu(); event.preventDefault();">Torna al Menu</button>
         </div>
     </div>
 
@@ -86,26 +47,24 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        // --- GESTIONE STATI ---
         const STATE = { MENU: 0, PLAYING: 1, GAMEOVER: 2 };
         let currentState = STATE.MENU;
 
-        // --- COSTANTI DI GIOCO ---
         const MAX_SCORE = 3;
-        const RESPAWN_TIME = 300; // 5 secondi (a 60fps)
-        const RELOAD_TIME = 120;  // 2 secondi per proiettile
-        const INVULNERABLE_TIME = 120; // 2 secondi
-        const POWERUP_INTERVAL = 600; // 10 secondi
+        const RESPAWN_TIME = 300; 
+        const RELOAD_TIME = 120;  
+        const INVULNERABLE_TIME = 120; 
+        const POWERUP_INTERVAL = 600; 
 
-        // --- VARIABILI GLOBALI GIOCO ---
         let p1, p2, bullets, powerups, obstacles, powerupTimer;
 
-        const base1 = { x: 50, y: 50, w: 60, h: 60, color: 'rgba(255, 71, 87, 0.3)' };
-        const base2 = { x: 914, y: 658, w: 60, h: 60, color: 'rgba(30, 144, 255, 0.3)' };
-        const powerupTypes = ['infinite_ammo', 'destroy_walls', 'speed', 'bounce'];
+        // Basi: Sacchi di sabbia (visivi)
+        const base1 = { x: 50, y: 50, w: 80, h: 80, color: 'rgba(255, 71, 87, 0.2)' };
+        const base2 = { x: 894, y: 638, w: 80, h: 80, color: 'rgba(30, 144, 255, 0.2)' };
+        
+        // Nuove abilità: bounce (gomma), destroy_walls (spacca muro), fire (infiniti), pierce (perforante), ghost (trasparenza)
+        const powerupTypes = ['bounce', 'destroy_walls', 'fire', 'pierce', 'ghost'];
 
-        // --- SISTEMA TOUCH (Joystick Multi-Touch) ---
-        // Ogni giocatore ha un'area per il movimento e un pulsante per sparare
         const touchAreas = {
             p1Move: { cx: 120, cy: 620, r: 80, touchId: null, dx: 0, dy: 0 },
             p1Shoot: { cx: 280, cy: 620, r: 50, touchId: null, pressed: false },
@@ -113,19 +72,14 @@
             p2Shoot: { cx: 740, cy: 150, r: 50, touchId: null, pressed: false }
         };
 
-        // Ascoltatori Touch (e mouse per testare su PC)
         const keys = {};
         window.addEventListener('keydown', e => keys[e.code] = true);
         window.addEventListener('keyup', e => keys[e.code] = false);
 
         function getTouchPos(canvas, evt, touch) {
             const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            return {
-                x: (touch.clientX - rect.left) * scaleX,
-                y: (touch.clientY - rect.top) * scaleY
-            };
+            const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
+            return { x: (touch.clientX - rect.left) * scaleX, y: (touch.clientY - rect.top) * scaleY };
         }
 
         canvas.addEventListener('touchstart', handleTouchStart, {passive: false});
@@ -134,75 +88,53 @@
         canvas.addEventListener('touchcancel', handleTouchEnd, {passive: false});
 
         function handleTouchStart(e) {
-            e.preventDefault();
             if (currentState !== STATE.PLAYING) return;
+            e.preventDefault();
             for (let i = 0; i < e.changedTouches.length; i++) {
-                let t = e.changedTouches[i];
-                let pos = getTouchPos(canvas, e, t);
-                
-                // Controlla collisione touch con le zone
+                let t = e.changedTouches[i]; let pos = getTouchPos(canvas, e, t);
                 for (const key in touchAreas) {
-                    let area = touchAreas[key];
-                    if (Math.hypot(pos.x - area.cx, pos.y - area.cy) < area.r) {
-                        area.touchId = t.identifier;
-                        if (key.includes('Shoot')) area.pressed = true;
-                        if (key.includes('Move')) { area.dx = pos.x - area.cx; area.dy = pos.y - area.cy; }
+                    let a = touchAreas[key];
+                    if (Math.hypot(pos.x - a.cx, pos.y - a.cy) < a.r) {
+                        a.touchId = t.identifier;
+                        if (key.includes('Shoot')) a.pressed = true;
+                        if (key.includes('Move')) { a.dx = pos.x - a.cx; a.dy = pos.y - a.cy; }
                     }
                 }
             }
         }
         function handleTouchMove(e) {
-            e.preventDefault();
             if (currentState !== STATE.PLAYING) return;
+            e.preventDefault();
             for (let i = 0; i < e.changedTouches.length; i++) {
-                let t = e.changedTouches[i];
-                let pos = getTouchPos(canvas, e, t);
+                let t = e.changedTouches[i]; let pos = getTouchPos(canvas, e, t);
                 for (const key in touchAreas) {
-                    let area = touchAreas[key];
-                    if (area.touchId === t.identifier && key.includes('Move')) {
-                        // Limita il joystick
-                        let dist = Math.hypot(pos.x - area.cx, pos.y - area.cy);
-                        let maxDist = area.r / 2;
-                        if (dist > maxDist) {
-                            area.dx = ((pos.x - area.cx) / dist) * maxDist;
-                            area.dy = ((pos.y - area.cy) / dist) * maxDist;
-                        } else {
-                            area.dx = pos.x - area.cx; area.dy = pos.y - area.cy;
-                        }
+                    let a = touchAreas[key];
+                    if (a.touchId === t.identifier && key.includes('Move')) {
+                        let dist = Math.hypot(pos.x - a.cx, pos.y - a.cy); let maxDist = a.r / 2;
+                        if (dist > maxDist) { a.dx = ((pos.x - a.cx) / dist) * maxDist; a.dy = ((pos.y - a.cy) / dist) * maxDist; } 
+                        else { a.dx = pos.x - a.cx; a.dy = pos.y - a.cy; }
                     }
                 }
             }
         }
         function handleTouchEnd(e) {
-            e.preventDefault();
             for (let i = 0; i < e.changedTouches.length; i++) {
                 let t = e.changedTouches[i];
                 for (const key in touchAreas) {
-                    let area = touchAreas[key];
-                    if (area.touchId === t.identifier) {
-                        area.touchId = null;
-                        if (key.includes('Shoot')) area.pressed = false;
-                        if (key.includes('Move')) { area.dx = 0; area.dy = 0; }
+                    let a = touchAreas[key];
+                    if (a.touchId === t.identifier) {
+                        a.touchId = null;
+                        if (key.includes('Shoot')) a.pressed = false;
+                        if (key.includes('Move')) { a.dx = 0; a.dy = 0; }
                     }
                 }
             }
         }
 
-        // --- INIZIALIZZAZIONE GIOCO ---
         function initTanks() {
             return {
-                p1: { 
-                    baseX: 80, baseY: 80, x: 80, y: 80, angle: Math.PI/4, radius: 20,
-                    color: '#ff4757', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0,
-                    ammo: 5, reloadTimer: 0, cooldown: 0,
-                    abilities: { infinite_ammo: 0, destroy_walls: 0, speed: 0, bounce: 0 }
-                },
-                p2: { 
-                    baseX: 944, baseY: 688, x: 944, y: 688, angle: Math.PI + Math.PI/4, radius: 20,
-                    color: '#1e90ff', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0,
-                    ammo: 5, reloadTimer: 0, cooldown: 0,
-                    abilities: { infinite_ammo: 0, destroy_walls: 0, speed: 0, bounce: 0 }
-                }
+                p1: { baseX: 90, baseY: 90, x: 90, y: 90, angle: Math.PI/4, radius: 22, color: '#ff4757', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0, ammo: 5, reloadTimer: 0, cooldown: 0, abilities: { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0 } },
+                p2: { baseX: 934, baseY: 678, x: 934, y: 678, angle: Math.PI + Math.PI/4, radius: 22, color: '#1e90ff', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0, ammo: 5, reloadTimer: 0, cooldown: 0, abilities: { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0 } }
             };
         }
 
@@ -211,17 +143,15 @@
             document.getElementById('gameover-screen').classList.add('hidden');
             document.getElementById('ui-layer').classList.remove('hidden');
             
-            let t = initTanks();
-            p1 = t.p1; p2 = t.p2;
+            let t = initTanks(); p1 = t.p1; p2 = t.p2;
             bullets = []; powerups = []; powerupTimer = POWERUP_INTERVAL;
-            document.getElementById('s1').innerText = 0;
-            document.getElementById('s2').innerText = 0;
+            document.getElementById('s1').innerText = 0; document.getElementById('s2').innerText = 0;
             
             obstacles = [
-                { x: 412, y: 150, w: 200, h: 50 }, { x: 412, y: 568, w: 200, h: 50 },
-                { x: 300, y: 300, w: 50, h: 168 }, { x: 674, y: 300, w: 50, h: 168 }
+                { x: 362, y: 150, w: 300, h: 40, type: 'wall' }, { x: 362, y: 578, w: 300, h: 40, type: 'wall' },
+                { x: 250, y: 300, w: 40, h: 168, type: 'wall' }, { x: 734, y: 300, w: 40, h: 168, type: 'wall' },
+                { x: 512, y: 384, w: 80, h: 80, type: 'tree' } // Ostacolo indistruttibile (albero centrale)
             ];
-            
             currentState = STATE.PLAYING;
         }
 
@@ -239,7 +169,6 @@
             document.getElementById('winner-text').style.color = winnerName === 'P1' ? '#ff4757' : '#1e90ff';
         }
 
-        // --- MOTORE FISICO E LOGICA ---
         function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) {
             let tX = cx; let tY = cy;
             if (cx < rx) tX = rx; else if (cx > rx + rw) tX = rx + rw;
@@ -248,72 +177,89 @@
         }
 
         function die(player) {
-            player.isDead = true;
-            player.respawnTimer = RESPAWN_TIME;
+            player.isDead = true; player.respawnTimer = RESPAWN_TIME;
         }
 
         function handlePlayer(p, controls, otherP) {
             if (p.isDead) {
                 p.respawnTimer--;
                 if (p.respawnTimer <= 0) {
-                    p.isDead = false; p.x = p.baseX; p.y = p.baseY;
-                    p.invulnerable = INVULNERABLE_TIME; p.ammo = 5;
-                    p.abilities = { infinite_ammo: 0, destroy_walls: 0, speed: 0, bounce: 0 };
+                    p.isDead = false; p.x = p.baseX; p.y = p.baseY; p.invulnerable = INVULNERABLE_TIME; p.ammo = 5;
+                    p.abilities = { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0 };
                 }
-                return; // Esce dall'update se è morto
+                return;
             }
 
             // Timer Abilità
-            for (let ab in p.abilities) if (p.abilities[ab] > 0) p.abilities[ab]--;
+            for (let ab in p.abilities) {
+                // 'pierce' usa cariche, non tempo. Le altre a tempo (300 frame = 5s)
+                if (ab !== 'pierce' && p.abilities[ab] > 0) p.abilities[ab]--;
+            }
             if (p.invulnerable > 0) p.invulnerable--;
             if (p.cooldown > 0) p.cooldown--;
 
-            // Ricarica Munizioni (se non è pieno)
-            if (p.ammo < 5) {
-                p.reloadTimer++;
-                if (p.reloadTimer >= RELOAD_TIME) { p.ammo++; p.reloadTimer = 0; }
-            }
+            // Ricarica Munizioni
+            if (p.ammo < 5) { p.reloadTimer++; if (p.reloadTimer >= RELOAD_TIME) { p.ammo++; p.reloadTimer = 0; } }
 
-            // Movimento (Tastiera + Touch)
-            let pSpeed = p.abilities.speed > 0 ? 6 : 3;
+            let pSpeed = 3.5;
             let oldX = p.x; let oldY = p.y;
             let isMoving = false;
 
             if (controls.left || controls.right || controls.up || controls.down) {
                 if (controls.left) p.angle -= 0.06;
                 if (controls.right) p.angle += 0.06;
-                if (controls.up) { p.x += Math.cos(p.angle) * pSpeed; p.y += Math.sin(p.angle) * pSpeed; isMoving = true; }
-                if (controls.down) { p.x -= Math.cos(p.angle) * pSpeed; p.y -= Math.sin(p.angle) * pSpeed; isMoving = true; }
+                if (controls.up) { p.x += Math.cos(p.angle) * pSpeed; p.y += Math.sin(p.angle) * pSpeed; }
+                if (controls.down) { p.x -= Math.cos(p.angle) * pSpeed; p.y -= Math.sin(p.angle) * pSpeed; }
             } else if (controls.touchX !== 0 || controls.touchY !== 0) {
-                // Supporto Joystick Touch
                 p.angle = Math.atan2(controls.touchY, controls.touchX);
-                p.x += Math.cos(p.angle) * pSpeed;
-                p.y += Math.sin(p.angle) * pSpeed;
-                isMoving = true;
+                p.x += Math.cos(p.angle) * pSpeed; p.y += Math.sin(p.angle) * pSpeed;
             }
 
-            // Limiti Mappa (Out of Bounds Fix)
+            // Limiti Mappa (Scatola)
             if (p.x - p.radius < 0) p.x = p.radius;
             if (p.x + p.radius > canvas.width) p.x = canvas.width - p.radius;
             if (p.y - p.radius < 0) p.y = p.radius;
             if (p.y + p.radius > canvas.height) p.y = canvas.height - p.radius;
 
-            // Collisione Ostacoli
+            // Collisione con Ostacoli (Tranne se Ghost)
+            let inObstacle = false;
             obstacles.forEach(obs => {
-                if (circleRectCollide(p.x, p.y, p.radius, obs.x, obs.y, obs.w, obs.h)) { p.x = oldX; p.y = oldY; }
+                if (circleRectCollide(p.x, p.y, p.radius, obs.x, obs.y, obs.w, obs.h)) {
+                    if (p.abilities.ghost <= 0) { p.x = oldX; p.y = oldY; } 
+                    else { inObstacle = true; }
+                }
             });
+
+            // Uscita Ghost: Se finisce il timer mentre sei nel muro, distruggi il muro (se distruttibile) o spingi fuori
+            if (p.abilities.ghost === 1 && inObstacle) {
+                for (let o = obstacles.length - 1; o >= 0; o--) {
+                    if (circleRectCollide(p.x, p.y, p.radius, obstacles[o].x, obstacles[o].y, obstacles[o].w, obstacles[o].h)) {
+                        if (obstacles[o].type === 'wall') obstacles.splice(o, 1); // Spacca
+                        else { p.x = oldX; p.y = oldY; } // Ti rigetta fuori dall'albero indistruttibile
+                    }
+                }
+            }
+
+            // Collisione tra Tank
+            if (!otherP.isDead && Math.hypot(p.x - otherP.x, p.y - otherP.y) < p.radius + otherP.radius) {
+                // Rimbalzo semplice: annulla il movimento
+                p.x = oldX; p.y = oldY;
+            }
 
             // Sparo
             if (controls.shoot && p.cooldown <= 0) {
-                if (p.ammo > 0 || p.abilities.infinite_ammo > 0) {
-                    bullets.push({ 
-                        x: p.x + Math.cos(p.angle) * 30, y: p.y + Math.sin(p.angle) * 30, 
-                        vx: Math.cos(p.angle) * 10, vy: Math.sin(p.angle) * 10, 
-                        owner: p, radius: 5, dead: false,
-                        wallDestroyer: (p.abilities.destroy_walls > 0), bounces: (p.abilities.bounce > 0) ? 2 : 0
-                    });
-                    p.cooldown = 20; // Pausa tra un colpo e l'altro per non sovrapporli
-                    if (p.abilities.infinite_ammo <= 0) p.ammo--;
+                if (p.ammo > 0 || p.abilities.fire > 0) {
+                    let b = { 
+                        x: p.x + Math.cos(p.angle) * 35, y: p.y + Math.sin(p.angle) * 35, 
+                        vx: Math.cos(p.angle) * 12, vy: Math.sin(p.angle) * 12, angle: p.angle,
+                        owner: p, radius: 6, dead: false,
+                        wallDestroyer: (p.abilities.destroy_walls > 0), bounces: (p.abilities.bounce > 0) ? 2 : 0,
+                        pierce: (p.abilities.pierce > 0), fire: (p.abilities.fire > 0)
+                    };
+                    bullets.push(b);
+                    p.cooldown = 20; 
+                    if (p.abilities.fire <= 0) p.ammo--;
+                    if (p.abilities.pierce > 0) { p.abilities.pierce--; if(p.abilities.pierce <= 0) p.ammo = 5; }
                 }
             }
 
@@ -321,9 +267,9 @@
             for (let i = powerups.length - 1; i >= 0; i--) {
                 let pu = powerups[i];
                 if (Math.hypot(p.x - pu.x, p.y - pu.y) < p.radius + pu.r) {
-                    p.abilities[pu.type] = 300; // 5 secondi
-                    p.ammo = 5; // Ricarica completa immediata
-                    powerups.splice(i, 1);
+                    if (pu.type === 'pierce') p.abilities[pu.type] = 3; // 3 cariche
+                    else p.abilities[pu.type] = 300; // 5 secondi
+                    p.ammo = 5; powerups.splice(i, 1);
                 }
             }
         }
@@ -331,177 +277,156 @@
         function update() {
             if (currentState !== STATE.PLAYING) return;
 
-            // Gestione Spawn Powerup
             powerupTimer--;
             if (powerupTimer <= 0) {
-                powerups.push({
-                    x: Math.random() * (canvas.width - 200) + 100,
-                    y: Math.random() * (canvas.height - 200) + 100,
-                    r: 15,
-                    type: powerupTypes[Math.floor(Math.random() * powerupTypes.length)]
-                });
+                powerups.push({ x: Math.random() * (canvas.width - 200) + 100, y: Math.random() * (canvas.height - 200) + 100, r: 15, type: powerupTypes[Math.floor(Math.random() * powerupTypes.length)] });
                 powerupTimer = POWERUP_INTERVAL;
             }
 
-            // Input P1 & P2
-            handlePlayer(p1, { 
-                left: keys['KeyA'], right: keys['KeyD'], up: keys['KeyW'], down: keys['KeyS'], shoot: (keys['Space'] || touchAreas.p1Shoot.pressed),
-                touchX: touchAreas.p1Move.dx, touchY: touchAreas.p1Move.dy
-            }, p2);
-            handlePlayer(p2, { 
-                left: keys['ArrowLeft'], right: keys['ArrowRight'], up: keys['ArrowUp'], down: keys['ArrowDown'], shoot: (keys['Enter'] || touchAreas.p2Shoot.pressed),
-                touchX: touchAreas.p2Move.dx, touchY: touchAreas.p2Move.dy
-            }, p1);
+            handlePlayer(p1, { left: keys['KeyA'], right: keys['KeyD'], up: keys['KeyW'], down: keys['KeyS'], shoot: (keys['Space'] || touchAreas.p1Shoot.pressed), touchX: touchAreas.p1Move.dx, touchY: touchAreas.p1Move.dy }, p2);
+            handlePlayer(p2, { left: keys['ArrowLeft'], right: keys['ArrowRight'], up: keys['ArrowUp'], down: keys['ArrowDown'], shoot: (keys['Enter'] || touchAreas.p2Shoot.pressed), touchX: touchAreas.p2Move.dx, touchY: touchAreas.p2Move.dy }, p1);
 
             // Logica Proiettili
             for (let i = 0; i < bullets.length; i++) {
                 let b = bullets[i];
                 if (b.dead) continue;
+                b.x += b.vx; b.y += b.vy; b.angle = Math.atan2(b.vy, b.vx);
 
-                b.x += b.vx; b.y += b.vy;
-
-                if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) { b.dead = true; continue; }
+                // Rimbalzo bordi mappa (Scatola)
+                if (b.x < 0 || b.x > canvas.width) {
+                    if (b.bounces > 0) { b.vx *= -1; b.bounces--; b.x = b.x < 0 ? 0 : canvas.width; } else b.dead = true;
+                }
+                if (b.y < 0 || b.y > canvas.height) {
+                    if (b.bounces > 0) { b.vy *= -1; b.bounces--; b.y = b.y < 0 ? 0 : canvas.height; } else b.dead = true;
+                }
 
                 // Collisione Ostacoli
                 for (let o = obstacles.length - 1; o >= 0; o--) {
                     let obs = obstacles[o];
                     if (circleRectCollide(b.x, b.y, b.radius, obs.x, obs.y, obs.w, obs.h)) {
-                        if (b.wallDestroyer) { obstacles.splice(o, 1); b.dead = true; } 
+                        if (b.pierce) { /* Passa attraverso senza fare nulla all'ostacolo o morire */ }
+                        else if (b.wallDestroyer && obs.type === 'wall') { obstacles.splice(o, 1); b.dead = true; } 
                         else if (b.bounces > 0) {
-                            let cX = Math.max(obs.x, Math.min(b.x, obs.x + obs.w));
-                            let cY = Math.max(obs.y, Math.min(b.y, obs.y + obs.h));
+                            let cX = Math.max(obs.x, Math.min(b.x, obs.x + obs.w)); let cY = Math.max(obs.y, Math.min(b.y, obs.y + obs.h));
                             if (Math.abs(b.x - cX) > Math.abs(b.y - cY)) b.vx *= -1; else b.vy *= -1;
                             b.bounces--;
                         } else { b.dead = true; }
                     }
                 }
 
-                // Collisione con l'altro tank
+                // Collisione Tank
                 let target = b.owner === p1 ? p2 : p1;
                 if (!b.dead && !target.isDead && target.invulnerable <= 0 && Math.hypot(b.x - target.x, b.y - target.y) < target.radius) {
-                    b.owner.score++;
-                    document.getElementById(b.owner === p1 ? 's1' : 's2').innerText = b.owner.score;
-                    b.dead = true; die(target);
-                    
+                    b.owner.score++; document.getElementById(b.owner === p1 ? 's1' : 's2').innerText = b.owner.score;
+                    if (!b.pierce) b.dead = true; die(target);
                     if (b.owner.score >= MAX_SCORE) endGame(b.owner === p1 ? 'P1' : 'P2');
                 }
             }
             bullets = bullets.filter(b => !b.dead);
         }
 
-        // --- MOTORE GRAFICO (UPGRADE) ---
+        // --- DISEGNO GRAFICA CAMPO DI BATTAGLIA ---
         function drawGrid() {
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
-            ctx.lineWidth = 2;
+            // Sfondo "Scatola / Tavolo" verde scuro militare
+            ctx.fillStyle = '#4b6584'; ctx.fillRect(0,0, canvas.width, canvas.height);
+            ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
             for(let i=0; i<canvas.height; i+=40) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke(); }
         }
 
         function drawTank(tank) {
-            if (tank.isDead) {
-                // Mostra un timer testuale se è morto
-                ctx.fillStyle = tank.color; ctx.font = "24px Arial";
-                ctx.fillText(`Respawn: ${Math.ceil(tank.respawnTimer/60)}s`, tank.baseX - 40, tank.baseY);
-                return;
-            }
-
+            if (tank.isDead) { ctx.fillStyle = tank.color; ctx.font = "24px Arial"; ctx.fillText(`Respawn: ${Math.ceil(tank.respawnTimer/60)}s`, tank.baseX, tank.baseY); return; }
             ctx.save();
-            ctx.translate(tank.x, tank.y);
-            ctx.rotate(tank.angle);
-
+            ctx.translate(tank.x, tank.y); ctx.rotate(tank.angle);
+            if (tank.abilities.ghost > 0) ctx.globalAlpha = 0.4; // Trasparenza Ghost
+            
             // Cingoli
-            ctx.fillStyle = '#222';
-            ctx.fillRect(-20, -22, 40, 10); // Sx
-            ctx.fillRect(-20, 12, 40, 10);  // Dx
-
-            // Corpo con sfumatura
-            let grad = ctx.createLinearGradient(-15, -15, 15, 15);
-            grad.addColorStop(0, tank.color); grad.addColorStop(1, '#000');
-            ctx.fillStyle = grad;
-            ctx.fillRect(-15, -15, 30, 30);
-            ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(-15, -15, 30, 30);
-
+            ctx.fillStyle = '#222'; ctx.fillRect(-22, -24, 44, 12); ctx.fillRect(-22, 12, 44, 12);
+            // Corpo
+            ctx.fillStyle = tank.color; ctx.fillRect(-18, -16, 36, 32);
+            ctx.strokeStyle = '#000'; ctx.lineWidth = 2; ctx.strokeRect(-18, -16, 36, 32);
             // Cannone
-            ctx.fillStyle = '#555'; ctx.fillRect(0, -5, 35, 10);
-            ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI*2); ctx.fill();
-
+            ctx.fillStyle = '#555'; ctx.fillRect(0, -6, 40, 12);
+            ctx.fillStyle = '#111'; ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI*2); ctx.fill();
             ctx.restore();
 
-            // Indicatore Munizioni
+            // Munizioni
             for (let i = 0; i < 5; i++) {
-                ctx.beginPath();
-                ctx.arc(tank.x - 16 + (i * 8), tank.y + 30, 3, 0, Math.PI*2);
-                ctx.fillStyle = i < tank.ammo ? '#f1c40f' : 'rgba(0,0,0,0.3)';
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(tank.x - 16 + (i * 8), tank.y + 35, 3, 0, Math.PI*2);
+                ctx.fillStyle = i < tank.ammo ? '#f1c40f' : 'rgba(0,0,0,0.3)'; ctx.fill();
             }
-            
-            // Bolla invulnerabilità
-            if (tank.invulnerable > 0) {
-                ctx.beginPath(); ctx.arc(tank.x, tank.y, 35, 0, Math.PI * 2);
-                ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`;
-                ctx.lineWidth = 3; ctx.stroke();
-            }
+            if (tank.abilities.pierce > 0) { ctx.fillStyle = '#8e44ad'; ctx.fillText(`Pierce: ${tank.abilities.pierce}`, tank.x - 30, tank.y - 35); }
+            if (tank.invulnerable > 0) { ctx.beginPath(); ctx.arc(tank.x, tank.y, 40, 0, Math.PI * 2); ctx.strokeStyle = `rgba(255, 255, 255, ${Math.random() * 0.5 + 0.3})`; ctx.lineWidth = 3; ctx.stroke(); }
         }
 
-        function drawUI() {
-            // Disegna i controlli Touch in sovrimpressione
-            for (const key in touchAreas) {
-                let a = touchAreas[key];
-                ctx.beginPath(); ctx.arc(a.cx, a.cy, a.r, 0, Math.PI*2);
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.fill();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 2; ctx.stroke();
-                
-                // Joystick Inner Circle
-                if (key.includes('Move')) {
-                    ctx.beginPath(); ctx.arc(a.cx + a.dx, a.cy + a.dy, a.r/2, 0, Math.PI*2);
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fill();
-                } else if (a.pressed) {
-                    ctx.beginPath(); ctx.arc(a.cx, a.cy, a.r*0.8, 0, Math.PI*2);
-                    ctx.fillStyle = 'rgba(255, 71, 87, 0.5)'; ctx.fill();
-                }
+        function drawBullet(b) {
+            ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.angle);
+            
+            if (b.fire) {
+                // Palla di fuoco
+                ctx.beginPath(); ctx.arc(0, 0, b.radius + 4, 0, Math.PI*2);
+                let grad = ctx.createRadialGradient(0,0,0,0,0,b.radius+4);
+                grad.addColorStop(0, '#f1c40f'); grad.addColorStop(1, '#e74c3c');
+                ctx.fillStyle = grad; ctx.fill();
+            } else if (b.pierce) {
+                // Dardo perforante Viola
+                ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.moveTo(10, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.fill();
+            } else {
+                // Proiettile Standard (Ogiva)
+                ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.moveTo(8, 0); ctx.lineTo(0, -5); ctx.lineTo(-6, -5); ctx.lineTo(-6, 5); ctx.lineTo(0, 5); ctx.fill();
+                if (b.wallDestroyer) { ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(8, 0, 3, 0, Math.PI*2); ctx.fill(); } // Punta rossa (spacca muro)
+                if (b.bounces > 0) { ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(8, 0, 3, 0, Math.PI*2); ctx.fill(); } // Punta verde di gomma
             }
+            ctx.restore();
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (currentState === STATE.MENU) { drawGrid(); return; }
-
             drawGrid();
 
-            // Basi
-            ctx.fillStyle = base1.color; ctx.fillRect(base1.x, base1.y, base1.w, base1.h);
-            ctx.fillStyle = base2.color; ctx.fillRect(base2.x, base2.y, base2.w, base2.h);
+            // Basi (Sacchi di sabbia/Recinto)
+            ctx.strokeStyle = '#d1ccc0'; ctx.lineWidth = 4; ctx.setLineDash([10, 5]);
+            ctx.strokeRect(base1.x, base1.y, base1.w, base1.h); ctx.strokeRect(base2.x, base2.y, base2.w, base2.h);
+            ctx.setLineDash([]);
 
-            // Ostacoli (Muri di pietra grezzi)
-            ctx.fillStyle = '#7f8c8d';
+            // Ostacoli
             obstacles.forEach(obs => {
-                ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
-                ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 3; ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
+                if (obs.type === 'wall') {
+                    // Muro di mattoni rossi
+                    ctx.fillStyle = '#c0392b'; ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+                    ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 2; ctx.strokeRect(obs.x, obs.y, obs.w, obs.h);
+                    // Disegna righe per simulare i mattoni
+                    ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 1;
+                    for(let i=10; i<obs.h; i+=10) { ctx.beginPath(); ctx.moveTo(obs.x, obs.y+i); ctx.lineTo(obs.x+obs.w, obs.y+i); ctx.stroke(); }
+                } else if (obs.type === 'tree') {
+                    // Albero indistruttibile
+                    ctx.fillStyle = '#27ae60'; ctx.beginPath(); ctx.arc(obs.x+obs.w/2, obs.y+obs.h/2, obs.w/2, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(obs.x+obs.w/2 - 10, obs.y+obs.h/2 - 10, obs.w/3, 0, Math.PI*2); ctx.fill();
+                }
             });
 
-            // Powerups (Cassa di Legno con Simbolo)
+            // Powerups (Icone differenziate per colore)
+            const puColors = { 'bounce': '#2ecc71', 'destroy_walls': '#c0392b', 'fire': '#f39c12', 'pierce': '#8e44ad', 'ghost': '#bdc3c7' };
             powerups.forEach(pu => {
-                ctx.fillStyle = '#d35400'; ctx.fillRect(pu.x - pu.r, pu.y - pu.r, pu.r*2, pu.r*2); // Cassa
-                ctx.strokeStyle = '#e67e22'; ctx.lineWidth = 2; ctx.strokeRect(pu.x - pu.r, pu.y - pu.r, pu.r*2, pu.r*2);
-                ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(pu.x, pu.y, pu.r*0.5, 0, Math.PI*2); ctx.fill(); // Pallino interno
+                ctx.fillStyle = '#34495e'; ctx.fillRect(pu.x - pu.r, pu.y - pu.r, pu.r*2, pu.r*2); 
+                ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 2; ctx.strokeRect(pu.x - pu.r, pu.y - pu.r, pu.r*2, pu.r*2);
+                ctx.fillStyle = puColors[pu.type] || '#fff'; ctx.beginPath(); ctx.arc(pu.x, pu.y, pu.r*0.6, 0, Math.PI*2); ctx.fill();
             });
 
-            // Proiettili
-            bullets.forEach(b => {
-                ctx.beginPath(); ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-                ctx.fillStyle = b.wallDestroyer ? '#ff4757' : '#f1c40f'; ctx.fill();
-                if (b.bounces > 0) { ctx.strokeStyle = '#1e90ff'; ctx.lineWidth=2; ctx.stroke(); }
-            });
+            bullets.forEach(b => drawBullet(b));
+            if (p1) drawTank(p1); if (p2) drawTank(p2);
 
-            if (p1) drawTank(p1);
-            if (p2) drawTank(p2);
-
-            drawUI();
+            // Controlli Touch UI
+            for (const key in touchAreas) {
+                let a = touchAreas[key];
+                ctx.beginPath(); ctx.arc(a.cx, a.cy, a.r, 0, Math.PI*2); ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.fill(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 2; ctx.stroke();
+                if (key.includes('Move')) { ctx.beginPath(); ctx.arc(a.cx + a.dx, a.cy + a.dy, a.r/2, 0, Math.PI*2); ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fill(); } 
+                else if (a.pressed) { ctx.beginPath(); ctx.arc(a.cx, a.cy, a.r*0.8, 0, Math.PI*2); ctx.fillStyle = 'rgba(255, 71, 87, 0.5)'; ctx.fill(); }
+            }
         }
 
-        function gameLoop() {
-            update(); draw(); requestAnimationFrame(gameLoop);
-        }
+        function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
         gameLoop();
     </script>
 </body>
