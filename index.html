@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>234 Player Hub - Tanks Battleground HD</title>
+    <title>234 Player Hub - MultiGame</title>
     <style>
         body { margin: 0; padding: 0; background-color: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; touch-action: none; }
         #game-container { position: relative; width: 100vw; height: 100vh; max-width: 1024px; max-height: 768px; box-shadow: 0 0 50px rgba(0,0,0,0.8); background-color: #2c3e50; overflow: hidden; }
@@ -11,13 +11,21 @@
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
         .score-board { display: flex; justify-content: space-between; padding: 15px 40px; font-size: 38px; font-weight: 900; text-shadow: 3px 3px 6px rgba(0,0,0,0.7); }
         #p1-score-text { color: #ff4757; } #p2-score-text { color: #1e90ff; }
-        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 46, 0.9); pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 46, 0.95); pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
         .hidden { opacity: 0; pointer-events: none !important; }
         h1 { font-size: 60px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 5px 15px rgba(0,0,0,0.5);}
         h2 { color: #f1c40f; margin-bottom: 40px; }
         .btn-group { display: flex; gap: 20px; flex-direction: column; align-items: center; }
-        button { padding: 15px 40px; font-size: 24px; font-weight: bold; color: white; background: #2ed573; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(46, 213, 115, 0.4); text-transform: uppercase; transition: transform 0.1s; width: 320px;}
-        button.map-btn { background: #f39c12; box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4); }
+        
+        .game-card-container { display: flex; gap: 30px; margin-bottom: 30px;}
+        .game-card { width: 200px; padding: 20px; background: #34495e; border-radius: 15px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 4px solid transparent;}
+        .game-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .game-card.tanks { border-color: #2ed573; }
+        .game-card.sumo { border-color: #f39c12; }
+        .game-card h3 { margin: 0 0 10px 0; font-size: 24px; }
+        .game-card p { margin: 0; font-size: 14px; color: #bdc3c7; }
+
+        button { padding: 15px 40px; font-size: 24px; font-weight: bold; color: white; background: #3498db; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4); text-transform: uppercase; transition: transform 0.1s; width: 320px;}
         button:active { transform: scale(0.95); }
     </style>
 </head>
@@ -30,14 +38,25 @@
                 <span id="p2-score-text">P2: <span id="s2">0</span>/3</span>
             </div>
         </div>
+        
         <div id="menu-screen" class="overlay-screen">
             <h1>Mini Games Hub</h1>
-            <h2>TANK BATTLE</h2>
-            <div class="btn-group">
-                <button onclick="startGame()" ontouchstart="startGame(); event.preventDefault();">Gioca (2 Player)</button>
-                <button class="map-btn" onclick="nextMap()" ontouchstart="nextMap(); event.preventDefault();">Mappa: Sabbia (Croce)</button>
+            <h2>Seleziona un Gioco</h2>
+            
+            <div class="game-card-container">
+                <div class="game-card tanks" onclick="startGame(STATE.TANKS)" ontouchstart="startGame(STATE.TANKS); event.preventDefault();">
+                    <h3 style="color: #2ed573;">Tank Battle</h3>
+                    <p>Combattimento strategico con potenziamenti e proiettili.</p>
+                </div>
+                <div class="game-card sumo" onclick="startGame(STATE.SUMO)" ontouchstart="startGame(STATE.SUMO); event.preventDefault();">
+                    <h3 style="color: #f39c12;">Bumper Sumo</h3>
+                    <p>Spingi l'avversario fuori dall'arena circolare!</p>
+                </div>
             </div>
+
+            <button onclick="nextMap()" ontouchstart="nextMap(); event.preventDefault();" id="map-btn">Tanks Map: Sabbia</button>
         </div>
+
         <div id="gameover-screen" class="overlay-screen hidden">
             <h1 id="winner-text">P1 VINCE!</h1>
             <button onclick="backToMenu()" ontouchstart="backToMenu(); event.preventDefault();">Torna al Menu</button>
@@ -48,171 +67,183 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
-        const STATE = { MENU: 0, PLAYING: 1, GAMEOVER: 2 };
+        // --- STATI GLOBALI ---
+        const STATE = { MENU: 0, TANKS: 1, SUMO: 2, GAMEOVER: 3 };
         let currentState = STATE.MENU;
-        const MAX_SCORE = 3; const RESPAWN_TIME = 300; const RELOAD_TIME = 120; const INVULNERABLE_TIME = 120; const POWERUP_INTERVAL = 600; 
+        const MAX_SCORE = 3; 
 
-        let p1, p2, bullets, powerups, obstacles, powerupTimer;
-        let currentMapIndex = 0;
+        // Variabili condivise
+        let p1, p2;
 
-        const powerupTypes = ['bounce', 'destroy_walls', 'fire', 'pierce', 'ghost', 'stealth'];
-
-        // --- SISTEMA MAPPE ---
-        function buildCrossMap() {
-            let obs = []; let cx = 512; let cy = 384;
-            for(let i=-4; i<=4; i++) {
-                obs.push({x: cx + i*34 - 16, y: cy - 16, w: 32, h: 32, type: 'wall'});
-                if(i!==0) obs.push({x: cx - 16, y: cy + i*34 - 16, w: 32, h: 32, type: 'wall'});
-            }
-            obs.push({x: 200, y: 150, r: 25, type: 'tree'}, {x: 824, y: 618, r: 25, type: 'tree'}, {x: 824, y: 150, r: 25, type: 'tree'}, {x: 200, y: 618, r: 25, type: 'tree'});
-            return obs;
-        }
-        function buildArenaMap() {
-            let obs = [];
-            obs.push({x: 312, y: 200, w: 400, h: 32, type: 'iron'}, {x: 312, y: 536, w: 400, h: 32, type: 'iron'}, {x: 200, y: 284, w: 32, h: 200, type: 'iron'}, {x: 792, y: 284, w: 32, h: 200, type: 'iron'});
-            return obs;
-        }
-        function buildRingMap() {
-            let obs = [];
-            for(let i=0; i<8; i++) {
-                obs.push({x: 350 + i*40, y: 200, w: 32, h: 32, type: 'wall'}, {x: 350 + i*40, y: 536, w: 32, h: 32, type: 'wall'});
-                if(i>0 && i<7) { obs.push({x: 350, y: 200 + i*40, w: 32, h: 32, type: 'wall'}, {x: 630, y: 200 + i*40, w: 32, h: 32, type: 'wall'}); }
-            }
-            return obs;
-        }
-        function buildForestMap() {
-            let obs = [];
-            obs.push({x: 300, y: 100, r: 35, type: 'tree'}, {x: 724, y: 100, r: 35, type: 'tree'}, {x: 512, y: 384, r: 45, type: 'tree'}, {x: 300, y: 668, r: 35, type: 'tree'}, {x: 724, y: 668, r: 35, type: 'tree'});
-            obs.push({x: 462, y: 200, w: 100, h: 32, type: 'wall'}, {x: 462, y: 536, w: 100, h: 32, type: 'wall'});
-            return obs;
-        }
-        function buildBoxMap() {
-            let obs = [];
-            obs.push({x: 400, y: 300, w: 224, h: 168, type: 'iron'}); // Cubo centrale metallico
-            return obs;
-        }
-
-        const MAPS = [
-            { name: "Sabbia (Croce)", bg: '#e8dcb8', line: '#d9ccaa', theme: 'sand', getObs: buildCrossMap },
-            { name: "Fabbrica (Arena)", bg: '#b2bec3', line: '#95a5a6', theme: 'concrete', getObs: buildArenaMap },
-            { name: "Deserto (Ring)", bg: '#e8dcb8', line: '#d9ccaa', theme: 'sand', getObs: buildRingMap },
-            { name: "Foresta", bg: '#78e08f', line: '#38ada9', theme: 'grass', getObs: buildForestMap },
-            { name: "Magazzino", bg: '#95afc0', line: '#535c68', theme: 'concrete', getObs: buildBoxMap }
-        ];
-
-        function nextMap() { currentMapIndex = (currentMapIndex + 1) % MAPS.length; document.querySelector('.map-btn').innerText = `Mappa: ${MAPS[currentMapIndex].name}`; }
-
-        const touchAreas = {
-            p1Move: { cx: 150, cy: 618, r: 80, touchId: null, dx: 0, dy: 0 }, p1Shoot: { cx: 70, cy: 698, r: 45, touchId: null, pressed: false },
-            p2Move: { cx: 874, cy: 150, r: 80, touchId: null, dx: 0, dy: 0 }, p2Shoot: { cx: 954, cy: 70, r: 45, touchId: null, pressed: false }
-        };
-
+        // ==========================================
+        //         SISTEMA INPUT (TOUCH E TASTIERA)
+        // ==========================================
         const keys = {};
         window.addEventListener('keydown', e => keys[e.code] = true); window.addEventListener('keyup', e => keys[e.code] = false);
 
+        const touchAreas = {
+            p1Move: { cx: 150, cy: 618, r: 80, touchId: null, dx: 0, dy: 0 }, 
+            p1Shoot: { cx: 70, cy: 698, r: 45, touchId: null, pressed: false },
+            p2Move: { cx: 874, cy: 150, r: 80, touchId: null, dx: 0, dy: 0 }, 
+            p2Shoot: { cx: 954, cy: 70, r: 45, touchId: null, pressed: false }
+        };
+
         function getTouchPos(canvas, evt, touch) {
-            const rect = canvas.getBoundingClientRect(); return { x: (touch.clientX - rect.left) * (canvas.width / rect.width), y: (touch.clientY - rect.top) * (canvas.height / rect.height) };
+            const rect = canvas.getBoundingClientRect(); 
+            return { x: (touch.clientX - rect.left) * (canvas.width / rect.width), y: (touch.clientY - rect.top) * (canvas.height / rect.height) };
         }
 
-        canvas.addEventListener('touchstart', handleTouchStart, {passive: false}); canvas.addEventListener('touchmove', handleTouchMove, {passive: false}); canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
-        function handleTouchStart(e) { if (currentState !== STATE.PLAYING) return; e.preventDefault(); for (let t of e.changedTouches) { let pos = getTouchPos(canvas, e, t); for (const key in touchAreas) { let a = touchAreas[key]; if (Math.hypot(pos.x - a.cx, pos.y - a.cy) < a.r) { a.touchId = t.identifier; if (key.includes('Shoot')) a.pressed = true; if (key.includes('Move')) { a.dx = pos.x - a.cx; a.dy = pos.y - a.cy; } } } } }
-        function handleTouchMove(e) { if (currentState !== STATE.PLAYING) return; e.preventDefault(); for (let t of e.changedTouches) { let pos = getTouchPos(canvas, e, t); for (const key in touchAreas) { let a = touchAreas[key]; if (a.touchId === t.identifier && key.includes('Move')) { let dist = Math.hypot(pos.x - a.cx, pos.y - a.cy); let maxDist = a.r / 2; if (dist > maxDist) { a.dx = ((pos.x - a.cx) / dist) * maxDist; a.dy = ((pos.y - a.cy) / dist) * maxDist; } else { a.dx = pos.x - a.cx; a.dy = pos.y - a.cy; } } } } }
-        function handleTouchEnd(e) { for (let t of e.changedTouches) { for (const key in touchAreas) { let a = touchAreas[key]; if (a.touchId === t.identifier) { a.touchId = null; if (key.includes('Shoot')) a.pressed = false; if (key.includes('Move')) { a.dx = 0; a.dy = 0; } } } } }
+        canvas.addEventListener('touchstart', handleTouchStart, {passive: false}); 
+        canvas.addEventListener('touchmove', handleTouchMove, {passive: false}); 
+        canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
+        
+        function handleTouchStart(e) { 
+            if (currentState === STATE.MENU || currentState === STATE.GAMEOVER) return; 
+            e.preventDefault(); 
+            for (let t of e.changedTouches) { 
+                let pos = getTouchPos(canvas, e, t); 
+                for (const key in touchAreas) { 
+                    let a = touchAreas[key]; 
+                    if (Math.hypot(pos.x - a.cx, pos.y - a.cy) < a.r) { 
+                        a.touchId = t.identifier; 
+                        if (key.includes('Shoot')) a.pressed = true; 
+                        if (key.includes('Move')) { a.dx = pos.x - a.cx; a.dy = pos.y - a.cy; } 
+                    } 
+                } 
+            } 
+        }
+        function handleTouchMove(e) { 
+            if (currentState === STATE.MENU || currentState === STATE.GAMEOVER) return; 
+            e.preventDefault(); 
+            for (let t of e.changedTouches) { 
+                let pos = getTouchPos(canvas, e, t); 
+                for (const key in touchAreas) { 
+                    let a = touchAreas[key]; 
+                    if (a.touchId === t.identifier && key.includes('Move')) { 
+                        let dist = Math.hypot(pos.x - a.cx, pos.y - a.cy); let maxDist = a.r / 2; 
+                        if (dist > maxDist) { a.dx = ((pos.x - a.cx) / dist) * maxDist; a.dy = ((pos.y - a.cy) / dist) * maxDist; } 
+                        else { a.dx = pos.x - a.cx; a.dy = pos.y - a.cy; } 
+                    } 
+                } 
+            } 
+        }
+        function handleTouchEnd(e) { 
+            for (let t of e.changedTouches) { 
+                for (const key in touchAreas) { 
+                    let a = touchAreas[key]; 
+                    if (a.touchId === t.identifier) { 
+                        a.touchId = null; 
+                        if (key.includes('Shoot')) a.pressed = false; 
+                        if (key.includes('Move')) { a.dx = 0; a.dy = 0; } 
+                    } 
+                } 
+            } 
+        }
+
+        // Utility globale
+        function endGame(winnerName) { 
+            currentState = STATE.GAMEOVER; 
+            document.getElementById('ui-layer').classList.add('hidden'); 
+            document.getElementById('gameover-screen').classList.remove('hidden'); 
+            document.getElementById('winner-text').innerText = `${winnerName} VINCE!`; 
+            document.getElementById('winner-text').style.color = winnerName === 'P1' ? '#ff4757' : '#1e90ff'; 
+        }
+        function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) { let tX = cx; let tY = cy; if (cx < rx) tX = rx; else if (cx > rx + rw) tX = rx + rw; if (cy < ry) tY = ry; else if (cy > ry + rh) tY = ry + rh; return ((cx - tX)*(cx - tX) + (cy - tY)*(cy - tY)) <= (cr*cr); }
+
+        // ==========================================
+        //             MINIGIOCO 1: TANKS
+        // ==========================================
+        let bullets, powerups, obstacles, powerupTimer;
+        const RESPAWN_TIME = 300; const RELOAD_TIME = 120; const INVULNERABLE_TIME = 120; const POWERUP_INTERVAL = 600; 
+        const powerupTypes = ['bounce', 'destroy_walls', 'fire', 'pierce', 'ghost', 'stealth'];
+        let currentMapIndex = 0;
+
+        function buildCrossMap() { let obs = []; let cx = 512; let cy = 384; for(let i=-4; i<=4; i++) { obs.push({x: cx + i*34 - 16, y: cy - 16, w: 32, h: 32, type: 'wall'}); if(i!==0) obs.push({x: cx - 16, y: cy + i*34 - 16, w: 32, h: 32, type: 'wall'}); } obs.push({x: 200, y: 150, r: 25, type: 'tree'}, {x: 824, y: 618, r: 25, type: 'tree'}, {x: 824, y: 150, r: 25, type: 'tree'}, {x: 200, y: 618, r: 25, type: 'tree'}); return obs; }
+        function buildArenaMap() { return [{x: 312, y: 200, w: 400, h: 32, type: 'iron'}, {x: 312, y: 536, w: 400, h: 32, type: 'iron'}, {x: 200, y: 284, w: 32, h: 200, type: 'iron'}, {x: 792, y: 284, w: 32, h: 200, type: 'iron'}]; }
+        const MAPS = [
+            { name: "Sabbia", bg: '#e8dcb8', line: '#d9ccaa', theme: 'sand', getObs: buildCrossMap },
+            { name: "Fabbrica", bg: '#b2bec3', line: '#95a5a6', theme: 'concrete', getObs: buildArenaMap }
+        ];
+
+        function nextMap() { currentMapIndex = (currentMapIndex + 1) % MAPS.length; document.getElementById('map-btn').innerText = `Tanks Map: ${MAPS[currentMapIndex].name}`; }
 
         function initTanks() {
-            return {
-                p1: { baseX: 120, baseY: 648, x: 120, y: 648, angle: -Math.PI/4, radius: 24, color: '#ff4757', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0, ammo: 5, reloadTimer: 0, cooldown: 0, abilities: { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0, stealth: 0 }, trails: [] },
-                p2: { baseX: 904, baseY: 120, x: 904, y: 120, angle: Math.PI - Math.PI/4, radius: 24, color: '#1e90ff', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0, ammo: 5, reloadTimer: 0, cooldown: 0, abilities: { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0, stealth: 0 }, trails: [] }
-            };
+            p1 = { baseX: 120, baseY: 648, x: 120, y: 648, angle: -Math.PI/4, radius: 24, color: '#ff4757', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0, ammo: 5, reloadTimer: 0, cooldown: 0, abilities: { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0, stealth: 0 }, trails: [] };
+            p2 = { baseX: 904, baseY: 120, x: 904, y: 120, angle: Math.PI - Math.PI/4, radius: 24, color: '#1e90ff', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0, ammo: 5, reloadTimer: 0, cooldown: 0, abilities: { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0, stealth: 0 }, trails: [] };
+            bullets = []; powerups = []; powerupTimer = POWERUP_INTERVAL;
+            obstacles = MAPS[currentMapIndex].getObs();
         }
 
-        function startGame() {
-            document.getElementById('menu-screen').classList.add('hidden'); document.getElementById('gameover-screen').classList.add('hidden'); document.getElementById('ui-layer').classList.remove('hidden');
-            let t = initTanks(); p1 = t.p1; p2 = t.p2; bullets = []; powerups = []; powerupTimer = POWERUP_INTERVAL;
-            document.getElementById('s1').innerText = 0; document.getElementById('s2').innerText = 0;
-            obstacles = MAPS[currentMapIndex].getObs(); currentState = STATE.PLAYING;
-        }
-
-        function backToMenu() { document.getElementById('gameover-screen').classList.add('hidden'); document.getElementById('menu-screen').classList.remove('hidden'); currentState = STATE.MENU; }
-        function endGame(winnerName) { currentState = STATE.GAMEOVER; document.getElementById('ui-layer').classList.add('hidden'); document.getElementById('gameover-screen').classList.remove('hidden'); document.getElementById('winner-text').innerText = `${winnerName} VINCE!`; document.getElementById('winner-text').style.color = winnerName === 'P1' ? '#ff4757' : '#1e90ff'; }
-        function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) { let tX = cx; let tY = cy; if (cx < rx) tX = rx; else if (cx > rx + rw) tX = rx + rw; if (cy < ry) tY = ry; else if (cy > ry + rh) tY = ry + rh; return ((cx - tX)*(cx - tX) + (cy - tY)*(cy - tY)) <= (cr*cr); }
-        function die(player) { player.isDead = true; player.respawnTimer = RESPAWN_TIME; player.trails = []; }
-
-        function handlePlayer(p, controls, otherP) {
-            if (p.isDead) {
-                p.respawnTimer--;
-                if (p.respawnTimer <= 0) { p.isDead = false; p.x = p.baseX; p.y = p.baseY; p.invulnerable = INVULNERABLE_TIME; p.ammo = 5; p.abilities = { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0, stealth: 0 }; }
-                return;
-            }
-
-            for (let ab in p.abilities) { if (ab !== 'pierce' && p.abilities[ab] > 0) p.abilities[ab]--; }
-            if (p.invulnerable > 0) p.invulnerable--; if (p.cooldown > 0) p.cooldown--;
-            if (p.ammo < 5) { p.reloadTimer++; if (p.reloadTimer >= RELOAD_TIME) { p.ammo++; p.reloadTimer = 0; } }
-
-            let pSpeed = 3.5; let oldX = p.x; let oldY = p.y; let isMoving = false;
-
-            if (controls.left || controls.right || controls.up || controls.down) {
-                if (controls.left) p.angle -= 0.06; if (controls.right) p.angle += 0.06;
-                if (controls.up) { p.x += Math.cos(p.angle) * pSpeed; p.y += Math.sin(p.angle) * pSpeed; isMoving = true; }
-                if (controls.down) { p.x -= Math.cos(p.angle) * pSpeed; p.y -= Math.sin(p.angle) * pSpeed; isMoving = true; }
-            } else if (controls.touchX !== 0 || controls.touchY !== 0) {
-                p.angle = Math.atan2(controls.touchY, controls.touchX);
-                p.x += Math.cos(p.angle) * pSpeed; p.y += Math.sin(p.angle) * pSpeed; isMoving = true;
-            }
-
-            // Sistema Tratteggi (Trails)
-            if (isMoving && Math.random() < 0.3) {
-                p.trails.push({ x: p.x, y: p.y, angle: p.angle, alpha: 0.6 });
-            }
-            p.trails.forEach(t => t.alpha -= 0.005);
-            p.trails = p.trails.filter(t => t.alpha > 0);
-
-            if (p.x - p.radius < 0) p.x = p.radius; if (p.x + p.radius > canvas.width) p.x = canvas.width - p.radius;
-            if (p.y - p.radius < 0) p.y = p.radius; if (p.y + p.radius > canvas.height) p.y = canvas.height - p.radius;
-
-            let inObstacle = false;
-            obstacles.forEach(obs => {
-                let hit = (obs.type === 'tree') ? (Math.hypot(p.x - obs.x, p.y - obs.y) < p.radius + obs.r) : circleRectCollide(p.x, p.y, p.radius, obs.x, obs.y, obs.w, obs.h);
-                if (hit) { if (p.abilities.ghost <= 0 || obs.type === 'iron') { p.x = oldX; p.y = oldY; } else { inObstacle = true; } }
-            });
-
-            if (p.abilities.ghost === 1 && inObstacle) {
-                for (let o = obstacles.length - 1; o >= 0; o--) {
-                    let hit = (obstacles[o].type === 'tree') ? (Math.hypot(p.x - obstacles[o].x, p.y - obstacles[o].y) < p.radius + obstacles[o].r) : circleRectCollide(p.x, p.y, p.radius, obstacles[o].x, obstacles[o].y, obstacles[o].w, obstacles[o].h);
-                    if (hit) { if (obstacles[o].type === 'wall') obstacles.splice(o, 1); else { p.x = oldX; p.y = oldY; } }
-                }
-            }
-
-            if (!otherP.isDead && Math.hypot(p.x - otherP.x, p.y - otherP.y) < p.radius + otherP.radius) { p.x = oldX; p.y = oldY; }
-
-            if (controls.shoot && p.cooldown <= 0) {
-                if (p.ammo > 0 || p.abilities.fire > 0) {
-                    bullets.push({ 
-                        x: p.x + Math.cos(p.angle) * 38, y: p.y + Math.sin(p.angle) * 38, vx: Math.cos(p.angle) * 12, vy: Math.sin(p.angle) * 12, angle: p.angle,
-                        owner: p, radius: 6, dead: false, wallDestroyer: (p.abilities.destroy_walls > 0), bounces: (p.abilities.bounce > 0) ? 2 : 0, pierce: (p.abilities.pierce > 0), fire: (p.abilities.fire > 0)
-                    });
-                    p.cooldown = 20; 
-                    if (p.abilities.fire <= 0) p.ammo--;
-                    if (p.abilities.pierce > 0) { p.abilities.pierce--; if(p.abilities.pierce <= 0) p.ammo = 5; }
-                }
-            }
-
-            for (let i = powerups.length - 1; i >= 0; i--) {
-                let pu = powerups[i];
-                if (Math.hypot(p.x - pu.x, p.y - pu.y) < p.radius + pu.r) {
-                    if (pu.type === 'pierce') p.abilities[pu.type] = 3; else p.abilities[pu.type] = 300;
-                    p.ammo = 5; powerups.splice(i, 1);
-                }
-            }
-        }
-
-        function update() {
-            if (currentState !== STATE.PLAYING) return;
+        function updateTanks() {
             powerupTimer--;
             if (powerupTimer <= 0) { powerups.push({ x: Math.random() * (canvas.width - 300) + 150, y: Math.random() * (canvas.height - 300) + 150, r: 16, type: powerupTypes[Math.floor(Math.random() * powerupTypes.length)] }); powerupTimer = POWERUP_INTERVAL; }
 
-            handlePlayer(p1, { left: keys['KeyA'], right: keys['KeyD'], up: keys['KeyW'], down: keys['KeyS'], shoot: (keys['Space'] || touchAreas.p1Shoot.pressed), touchX: touchAreas.p1Move.dx, touchY: touchAreas.p1Move.dy }, p2);
-            handlePlayer(p2, { left: keys['ArrowLeft'], right: keys['ArrowRight'], up: keys['ArrowUp'], down: keys['ArrowDown'], shoot: (keys['Enter'] || touchAreas.p2Shoot.pressed), touchX: touchAreas.p2Move.dx, touchY: touchAreas.p2Move.dy }, p1);
+            const handleTankPlayer = (p, controls, otherP) => {
+                if (p.isDead) {
+                    p.respawnTimer--;
+                    if (p.respawnTimer <= 0) { p.isDead = false; p.x = p.baseX; p.y = p.baseY; p.invulnerable = INVULNERABLE_TIME; p.ammo = 5; p.abilities = { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0, stealth: 0 }; }
+                    return;
+                }
+
+                for (let ab in p.abilities) { if (ab !== 'pierce' && p.abilities[ab] > 0) p.abilities[ab]--; }
+                if (p.invulnerable > 0) p.invulnerable--; if (p.cooldown > 0) p.cooldown--;
+                if (p.ammo < 5) { p.reloadTimer++; if (p.reloadTimer >= RELOAD_TIME) { p.ammo++; p.reloadTimer = 0; } }
+
+                let pSpeed = 3.5; let oldX = p.x; let oldY = p.y; let isMoving = false;
+
+                if (controls.left || controls.right || controls.up || controls.down) {
+                    if (controls.left) p.angle -= 0.06; if (controls.right) p.angle += 0.06;
+                    if (controls.up) { p.x += Math.cos(p.angle) * pSpeed; p.y += Math.sin(p.angle) * pSpeed; isMoving = true; }
+                    if (controls.down) { p.x -= Math.cos(p.angle) * pSpeed; p.y -= Math.sin(p.angle) * pSpeed; isMoving = true; }
+                } else if (controls.touchX !== 0 || controls.touchY !== 0) {
+                    p.angle = Math.atan2(controls.touchY, controls.touchX);
+                    p.x += Math.cos(p.angle) * pSpeed; p.y += Math.sin(p.angle) * pSpeed; isMoving = true;
+                }
+
+                if (isMoving && Math.random() < 0.3) p.trails.push({ x: p.x, y: p.y, angle: p.angle, alpha: 0.6 });
+                p.trails.forEach(t => t.alpha -= 0.005); p.trails = p.trails.filter(t => t.alpha > 0);
+
+                if (p.x - p.radius < 0) p.x = p.radius; if (p.x + p.radius > canvas.width) p.x = canvas.width - p.radius;
+                if (p.y - p.radius < 0) p.y = p.radius; if (p.y + p.radius > canvas.height) p.y = canvas.height - p.radius;
+
+                let inObstacle = false;
+                obstacles.forEach(obs => {
+                    let hit = (obs.type === 'tree') ? (Math.hypot(p.x - obs.x, p.y - obs.y) < p.radius + obs.r) : circleRectCollide(p.x, p.y, p.radius, obs.x, obs.y, obs.w, obs.h);
+                    if (hit) { if (p.abilities.ghost <= 0 || obs.type === 'iron') { p.x = oldX; p.y = oldY; } else { inObstacle = true; } }
+                });
+
+                if (p.abilities.ghost === 1 && inObstacle) {
+                    for (let o = obstacles.length - 1; o >= 0; o--) {
+                        let hit = (obstacles[o].type === 'tree') ? (Math.hypot(p.x - obstacles[o].x, p.y - obstacles[o].y) < p.radius + obstacles[o].r) : circleRectCollide(p.x, p.y, p.radius, obstacles[o].x, obstacles[o].y, obstacles[o].w, obstacles[o].h);
+                        if (hit) { if (obstacles[o].type === 'wall') obstacles.splice(o, 1); else { p.x = oldX; p.y = oldY; } }
+                    }
+                }
+
+                if (!otherP.isDead && Math.hypot(p.x - otherP.x, p.y - otherP.y) < p.radius + otherP.radius) { p.x = oldX; p.y = oldY; }
+
+                if (controls.shoot && p.cooldown <= 0) {
+                    if (p.ammo > 0 || p.abilities.fire > 0) {
+                        bullets.push({ 
+                            x: p.x + Math.cos(p.angle) * 38, y: p.y + Math.sin(p.angle) * 38, vx: Math.cos(p.angle) * 12, vy: Math.sin(p.angle) * 12, angle: p.angle,
+                            owner: p, radius: 6, dead: false, wallDestroyer: (p.abilities.destroy_walls > 0), bounces: (p.abilities.bounce > 0) ? 2 : 0, pierce: (p.abilities.pierce > 0), fire: (p.abilities.fire > 0)
+                        });
+                        p.cooldown = 20; 
+                        if (p.abilities.fire <= 0) p.ammo--;
+                        if (p.abilities.pierce > 0) { p.abilities.pierce--; if(p.abilities.pierce <= 0) p.ammo = 5; }
+                    }
+                }
+
+                for (let i = powerups.length - 1; i >= 0; i--) {
+                    let pu = powerups[i];
+                    if (Math.hypot(p.x - pu.x, p.y - pu.y) < p.radius + pu.r) {
+                        if (pu.type === 'pierce') p.abilities[pu.type] = 3; else p.abilities[pu.type] = 300;
+                        p.ammo = 5; powerups.splice(i, 1);
+                    }
+                }
+            };
+
+            handleTankPlayer(p1, { left: keys['KeyA'], right: keys['KeyD'], up: keys['KeyW'], down: keys['KeyS'], shoot: (keys['Space'] || touchAreas.p1Shoot.pressed), touchX: touchAreas.p1Move.dx, touchY: touchAreas.p1Move.dy }, p2);
+            handleTankPlayer(p2, { left: keys['ArrowLeft'], right: keys['ArrowRight'], up: keys['ArrowUp'], down: keys['ArrowDown'], shoot: (keys['Enter'] || touchAreas.p2Shoot.pressed), touchX: touchAreas.p2Move.dx, touchY: touchAreas.p2Move.dy }, p1);
 
             for (let i = 0; i < bullets.length; i++) {
                 let b = bullets[i]; if (b.dead) continue;
@@ -238,22 +269,20 @@
                 let target = b.owner === p1 ? p2 : p1;
                 if (!b.dead && !target.isDead && target.invulnerable <= 0 && Math.hypot(b.x - target.x, b.y - target.y) < target.radius) {
                     b.owner.score++; document.getElementById(b.owner === p1 ? 's1' : 's2').innerText = b.owner.score;
-                    if (!b.pierce) b.dead = true; die(target);
+                    if (!b.pierce) b.dead = true; 
+                    target.isDead = true; target.respawnTimer = RESPAWN_TIME; target.trails = [];
                     if (b.owner.score >= MAX_SCORE) endGame(b.owner === p1 ? 'P1' : 'P2');
                 }
             }
             bullets = bullets.filter(b => !b.dead);
         }
 
-        function drawProceduralBackground() {
+        function drawTanks() {
             let map = MAPS[currentMapIndex]; ctx.fillStyle = map.bg; ctx.fillRect(0,0, canvas.width, canvas.height);
             ctx.strokeStyle = map.line; ctx.lineWidth = 6; ctx.lineCap = 'round';
             if(map.theme === 'sand') { for(let y = 30; y < canvas.height; y += 60) { ctx.beginPath(); for(let x = 0; x <= canvas.width + 40; x += 60) { ctx.quadraticCurveTo(x + 30, y + 20, x + 60, y); } ctx.stroke(); } } 
             else if (map.theme === 'concrete') { ctx.setLineDash([20, 20]); for(let y = 0; y < canvas.height; y += 100) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); } for(let x = 0; x < canvas.width; x += 100) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); } ctx.setLineDash([]); }
-            else if (map.theme === 'grass') { ctx.strokeStyle = map.line; ctx.lineWidth = 4; for(let i=0; i<50; i++) { ctx.beginPath(); let tx = Math.random()*canvas.width; let ty = Math.random()*canvas.height; ctx.moveTo(tx, ty); ctx.lineTo(tx+10, ty-15); ctx.lineTo(tx+20, ty); ctx.stroke(); } }
-        }
 
-        function drawBasesAndAmmo() {
             ctx.fillStyle = '#ff4757'; ctx.beginPath(); ctx.moveTo(0, canvas.height); ctx.arc(0, canvas.height, 220, 0, -Math.PI/2, true); ctx.fill();
             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(70, canvas.height - 70, 45, 0, Math.PI*2); ctx.fill();
             ctx.fillStyle = '#1e90ff'; ctx.beginPath(); ctx.moveTo(canvas.width, 0); ctx.arc(canvas.width, 0, 220, Math.PI, Math.PI/2, true); ctx.fill();
@@ -261,133 +290,215 @@
 
             ctx.fillStyle = '#b33939'; ctx.beginPath(); ctx.roundRect(10, canvas.height/2 - 100, 30, 200, 10); ctx.fill();
             for(let i=0; i<5; i++) { ctx.fillStyle = (i < (p1 ? p1.ammo : 0)) ? '#f1c40f' : '#631e1e'; ctx.fillRect(15, canvas.height/2 + 60 - (i*36), 20, 24); }
-
             ctx.fillStyle = '#192a56'; ctx.beginPath(); ctx.roundRect(canvas.width - 40, canvas.height/2 - 100, 30, 200, 10); ctx.fill();
             for(let i=0; i<5; i++) { ctx.fillStyle = (i < (p2 ? p2.ammo : 0)) ? '#f1c40f' : '#0d152b'; ctx.fillRect(canvas.width - 35, canvas.height/2 + 60 - (i*36), 20, 24); }
-        }
 
-        function drawTrails(tank) {
-            tank.trails.forEach(t => {
-                ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.angle);
-                ctx.fillStyle = `rgba(0, 0, 0, ${t.alpha * 0.2})`;
-                ctx.fillRect(-22, -22, 44, 8); // Traccia Sinistra
-                ctx.fillRect(-22, 14, 44, 8);  // Traccia Destra
-                ctx.restore();
-            });
-        }
+            const drawTrails = tank => { tank.trails.forEach(t => { ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.angle); ctx.fillStyle = `rgba(0, 0, 0, ${t.alpha * 0.2})`; ctx.fillRect(-22, -22, 44, 8); ctx.fillRect(-22, 14, 44, 8); ctx.restore(); }); };
+            if(p1) drawTrails(p1); if(p2) drawTrails(p2);
 
-        function drawTank(tank) {
-            if (tank.isDead) return;
-            ctx.save();
-            
-            // Effetto Invisibilità (Stealth)
-            if (tank.abilities.stealth > 0) ctx.globalAlpha = 0.2;
-            else if (tank.abilities.ghost > 0) ctx.globalAlpha = 0.5;
-
-            ctx.translate(tank.x, tank.y); ctx.rotate(tank.angle);
-            
-            // Ombra
-            ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
-
-            // Cingoli HD
-            ctx.fillStyle = '#2d3436'; 
-            ctx.beginPath(); ctx.roundRect(-24, -28, 48, 16, 4); ctx.fill();
-            ctx.beginPath(); ctx.roundRect(-24, 12, 48, 16, 4); ctx.fill();
-            // Dettagli Cingoli (strisce grigie)
-            ctx.fillStyle = '#636e72'; ctx.shadowColor = 'transparent';
-            for(let i=-20; i<20; i+=8) { ctx.fillRect(i, -28, 4, 16); ctx.fillRect(i, 12, 4, 16); }
-            
-            // Corpo Tank HD
-            ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 5;
-            let bodyGrad = ctx.createLinearGradient(-20, -20, 20, 20);
-            bodyGrad.addColorStop(0, tank.color); bodyGrad.addColorStop(1, '#a4b0be');
-            ctx.fillStyle = bodyGrad;
-            ctx.beginPath(); ctx.roundRect(-20, -20, 40, 40, 10); ctx.fill();
-            
-            // Highlight (Luce sul bordo)
-            ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 3; ctx.stroke();
-            
-            // Cannone
-            ctx.fillStyle = '#718093'; ctx.shadowColor = 'rgba(0,0,0,0.5)';
-            ctx.beginPath(); ctx.roundRect(0, -6, 40, 12, 4); ctx.fill();
-            
-            // Torretta
-            let turretGrad = ctx.createRadialGradient(0,0,2, 0,0,16);
-            turretGrad.addColorStop(0, '#2f3640'); turretGrad.addColorStop(1, '#1e272e');
-            ctx.fillStyle = turretGrad; ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI*2); ctx.fill();
-            // Portello
-            ctx.fillStyle = '#718093'; ctx.beginPath(); ctx.arc(-4, 0, 8, 0, Math.PI*2); ctx.fill();
-            
-            ctx.restore();
-
-            if (tank.abilities.pierce > 0) { ctx.fillStyle = '#8e44ad'; ctx.font="bold 16px Arial"; ctx.fillText(`P:${tank.abilities.pierce}`, tank.x - 15, tank.y - 30); }
-            if (tank.invulnerable > 0) { ctx.beginPath(); ctx.arc(tank.x, tank.y, 45, 0, Math.PI * 2); ctx.strokeStyle = `rgba(255, 255, 255, 0.8)`; ctx.lineWidth = 4; ctx.stroke(); }
-        }
-
-        function drawBullet(b) {
-            ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.angle);
-            ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 4;
-            if (b.fire) {
-                ctx.beginPath(); ctx.arc(0, 0, b.radius + 4, 0, Math.PI*2); let grad = ctx.createRadialGradient(0,0,0,0,0,b.radius+4); grad.addColorStop(0, '#f1c40f'); grad.addColorStop(1, '#e74c3c'); ctx.fillStyle = grad; ctx.fill();
-            } else if (b.pierce) {
-                ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.fill();
-            } else {
-                ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.roundRect(-8, -5, 16, 10, 5); ctx.fill();
-                if (b.wallDestroyer) { ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(6, 0, 4, 0, Math.PI*2); ctx.fill(); } 
-                if (b.bounces > 0) { ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(6, 0, 4, 0, Math.PI*2); ctx.fill(); }
-            }
-            ctx.restore();
-        }
-
-        function drawObstacles() {
             obstacles.forEach(obs => {
                 ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 8; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4;
-                if (obs.type === 'wall') {
-                    ctx.fillStyle = '#d35400'; ctx.beginPath(); ctx.roundRect(obs.x, obs.y, obs.w, obs.h, 6); ctx.fill();
-                    ctx.strokeStyle = '#e67e22'; ctx.lineWidth = 2; ctx.stroke();
-                } else if (obs.type === 'tree') {
-                    ctx.save(); ctx.translate(obs.x, obs.y); ctx.fillStyle = '#2ecc71'; ctx.beginPath();
-                    for(let i=0; i<8; i++) { ctx.rotate(Math.PI/4); ctx.lineTo(0, -obs.r); ctx.lineTo(obs.r/3, -obs.r/3); } ctx.fill(); ctx.restore();
-                } else if (obs.type === 'iron') {
-                    ctx.fillStyle = '#7f8c8d'; ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
-                    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.setLineDash([10, 10]); ctx.strokeRect(obs.x+2, obs.y+2, obs.w-4, obs.h-4); ctx.setLineDash([]);
-                }
+                if (obs.type === 'wall') { ctx.fillStyle = '#d35400'; ctx.beginPath(); ctx.roundRect(obs.x, obs.y, obs.w, obs.h, 6); ctx.fill(); ctx.strokeStyle = '#e67e22'; ctx.lineWidth = 2; ctx.stroke(); } 
+                else if (obs.type === 'tree') { ctx.save(); ctx.translate(obs.x, obs.y); ctx.fillStyle = '#2ecc71'; ctx.beginPath(); for(let i=0; i<8; i++) { ctx.rotate(Math.PI/4); ctx.lineTo(0, -obs.r); ctx.lineTo(obs.r/3, -obs.r/3); } ctx.fill(); ctx.restore(); } 
+                else if (obs.type === 'iron') { ctx.fillStyle = '#7f8c8d'; ctx.fillRect(obs.x, obs.y, obs.w, obs.h); ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.setLineDash([10, 10]); ctx.strokeRect(obs.x+2, obs.y+2, obs.w-4, obs.h-4); ctx.setLineDash([]); }
                 ctx.shadowColor = 'transparent';
             });
-        }
 
-        function drawPowerups() {
             const puColors = { 'bounce': '#2ecc71', 'destroy_walls': '#c0392b', 'fire': '#f39c12', 'pierce': '#8e44ad', 'ghost': '#bdc3c7', 'stealth': '#00d2d3' };
             powerups.forEach(pu => {
-                ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 5;
-                ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.roundRect(pu.x - pu.r, pu.y - pu.r, pu.r*2, pu.r*2, 6); ctx.fill(); 
-                ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 2; ctx.stroke();
+                ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.roundRect(pu.x - pu.r, pu.y - pu.r, pu.r*2, pu.r*2, 6); ctx.fill(); ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 2; ctx.stroke();
                 ctx.fillStyle = puColors[pu.type] || '#fff'; ctx.beginPath(); ctx.arc(pu.x, pu.y, pu.r*0.6, 0, Math.PI*2); ctx.fill();
-                ctx.shadowColor = 'transparent';
             });
+
+            bullets.forEach(b => {
+                ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.angle);
+                if (b.fire) { ctx.beginPath(); ctx.arc(0, 0, b.radius + 4, 0, Math.PI*2); let grad = ctx.createRadialGradient(0,0,0,0,0,b.radius+4); grad.addColorStop(0, '#f1c40f'); grad.addColorStop(1, '#e74c3c'); ctx.fillStyle = grad; ctx.fill(); } 
+                else if (b.pierce) { ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.fill(); } 
+                else { ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.roundRect(-8, -5, 16, 10, 5); ctx.fill(); if (b.wallDestroyer) { ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(6, 0, 4, 0, Math.PI*2); ctx.fill(); } if (b.bounces > 0) { ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(6, 0, 4, 0, Math.PI*2); ctx.fill(); } }
+                ctx.restore();
+            });
+
+            const drawSingleTank = tank => {
+                if (tank.isDead) return;
+                ctx.save();
+                if (tank.abilities.stealth > 0) ctx.globalAlpha = 0.2; else if (tank.abilities.ghost > 0) ctx.globalAlpha = 0.5;
+                ctx.translate(tank.x, tank.y); ctx.rotate(tank.angle);
+                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
+                ctx.fillStyle = '#2d3436'; ctx.beginPath(); ctx.roundRect(-24, -28, 48, 16, 4); ctx.fill(); ctx.beginPath(); ctx.roundRect(-24, 12, 48, 16, 4); ctx.fill();
+                ctx.fillStyle = '#636e72'; ctx.shadowColor = 'transparent'; for(let i=-20; i<20; i+=8) { ctx.fillRect(i, -28, 4, 16); ctx.fillRect(i, 12, 4, 16); }
+                ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 5; let bodyGrad = ctx.createLinearGradient(-20, -20, 20, 20); bodyGrad.addColorStop(0, tank.color); bodyGrad.addColorStop(1, '#a4b0be');
+                ctx.fillStyle = bodyGrad; ctx.beginPath(); ctx.roundRect(-20, -20, 40, 40, 10); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 3; ctx.stroke();
+                ctx.fillStyle = '#718093'; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.roundRect(0, -6, 40, 12, 4); ctx.fill();
+                let turretGrad = ctx.createRadialGradient(0,0,2, 0,0,16); turretGrad.addColorStop(0, '#2f3640'); turretGrad.addColorStop(1, '#1e272e');
+                ctx.fillStyle = turretGrad; ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#718093'; ctx.beginPath(); ctx.arc(-4, 0, 8, 0, Math.PI*2); ctx.fill(); ctx.restore();
+                if (tank.invulnerable > 0) { ctx.beginPath(); ctx.arc(tank.x, tank.y, 45, 0, Math.PI * 2); ctx.strokeStyle = `rgba(255, 255, 255, 0.8)`; ctx.lineWidth = 4; ctx.stroke(); }
+            };
+            if(p1) drawSingleTank(p1); if(p2) drawSingleTank(p2);
+        }
+
+        // ==========================================
+        //             MINIGIOCO 2: SUMO
+        // ==========================================
+        const ARENA_CENTER = { x: 512, y: 384, r: 320 };
+
+        function initSumo() {
+            p1 = { x: 300, y: 384, angle: 0, radius: 28, color: '#ff4757', score: 0, vx: 0, vy: 0, isDead: false };
+            p2 = { x: 724, y: 384, angle: Math.PI, radius: 28, color: '#1e90ff', score: 0, vx: 0, vy: 0, isDead: false };
+        }
+
+        function updateSumo() {
+            const handleSumoPlayer = (p, controls) => {
+                if(p.isDead) return;
+                let accel = 0;
+                if (controls.left) p.angle -= 0.08;
+                if (controls.right) p.angle += 0.08;
+                if (controls.up) accel = 0.6;
+                if (controls.down) accel = -0.4;
+
+                if (controls.touchX !== 0 || controls.touchY !== 0) {
+                    p.angle = Math.atan2(controls.touchY, controls.touchX);
+                    accel = 0.6;
+                }
+
+                // Aggiunge slancio continuo
+                p.vx += Math.cos(p.angle) * accel;
+                p.vy += Math.sin(p.angle) * accel;
+                
+                // Attrito
+                p.vx *= 0.95; 
+                p.vy *= 0.95;
+
+                p.x += p.vx; 
+                p.y += p.vy;
+
+                // Controlla se cade fuori
+                if (Math.hypot(p.x - ARENA_CENTER.x, p.y - ARENA_CENTER.y) > ARENA_CENTER.r) {
+                    p.isDead = true;
+                }
+            };
+
+            handleSumoPlayer(p1, { left: keys['KeyA'], right: keys['KeyD'], up: keys['KeyW'], down: keys['KeyS'], touchX: touchAreas.p1Move.dx, touchY: touchAreas.p1Move.dy });
+            handleSumoPlayer(p2, { left: keys['ArrowLeft'], right: keys['ArrowRight'], up: keys['ArrowUp'], down: keys['ArrowDown'], touchX: touchAreas.p2Move.dx, touchY: touchAreas.p2Move.dy });
+
+            // Fisica degli Scontri (Bumper Collision)
+            if (!p1.isDead && !p2.isDead) {
+                let dx = p2.x - p1.x; let dy = p2.y - p1.y;
+                let dist = Math.hypot(dx, dy);
+                if (dist < p1.radius + p2.radius) {
+                    let overlap = (p1.radius + p2.radius) - dist;
+                    let nx = dx / dist; let ny = dy / dist;
+                    
+                    // Sposta fisicamente per impedire compenetrazione
+                    p1.x -= nx * overlap / 2; p1.y -= ny * overlap / 2;
+                    p2.x += nx * overlap / 2; p2.y += ny * overlap / 2;
+
+                    // Scambio di quantità di moto (Rimbalzo Elastico)
+                    let bounceForce = 1.8;
+                    let v1n = p1.vx * nx + p1.vy * ny;
+                    let v2n = p2.vx * nx + p2.vy * ny;
+                    let dv = v1n - v2n;
+
+                    p1.vx -= dv * nx * bounceForce; p1.vy -= dv * ny * bounceForce;
+                    p2.vx += dv * nx * bounceForce; p2.vy += dv * ny * bounceForce;
+                }
+            }
+
+            // Check Vittoria Turno
+            if (p1.isDead || p2.isDead) {
+                if (p1.isDead && !p2.isDead) { p2.score++; document.getElementById('s2').innerText = p2.score; }
+                else if (p2.isDead && !p1.isDead) { p1.score++; document.getElementById('s1').innerText = p1.score; }
+                
+                if (p1.score >= MAX_SCORE) endGame('P1');
+                else if (p2.score >= MAX_SCORE) endGame('P2');
+                else {
+                    // Reset positions per il nuovo round di sumo
+                    p1.x = 300; p1.y = 384; p1.angle = 0; p1.vx = 0; p1.vy = 0; p1.isDead = false;
+                    p2.x = 724; p2.y = 384; p2.angle = Math.PI; p2.vx = 0; p2.vy = 0; p2.isDead = false;
+                }
+            }
+        }
+
+        function drawSumo() {
+            ctx.fillStyle = '#2c3e50'; ctx.fillRect(0,0, canvas.width, canvas.height);
+            
+            // Arena Sumo
+            ctx.beginPath(); ctx.arc(ARENA_CENTER.x, ARENA_CENTER.y, ARENA_CENTER.r + 20, 0, Math.PI*2);
+            ctx.fillStyle = '#e74c3c'; ctx.fill(); // Bordo Rosso pericolo
+            
+            ctx.beginPath(); ctx.arc(ARENA_CENTER.x, ARENA_CENTER.y, ARENA_CENTER.r, 0, Math.PI*2);
+            ctx.fillStyle = '#ecf0f1'; ctx.fill(); // Piattaforma Bianca
+            ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 10; ctx.stroke();
+            
+            ctx.beginPath(); ctx.arc(ARENA_CENTER.x, ARENA_CENTER.y, 60, 0, Math.PI*2);
+            ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 4; ctx.stroke(); // Centro
+
+            const drawBumperCar = p => {
+                if(p.isDead) return;
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
+                // Bumper di Gomma Nera
+                ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2);
+                ctx.fillStyle = '#2d3436'; ctx.fill();
+                ctx.strokeStyle = p.color; ctx.lineWidth = 6; ctx.stroke();
+                // Telaio
+                ctx.beginPath(); ctx.roundRect(-15, -12, 30, 24, 6);
+                ctx.fillStyle = p.color; ctx.fill();
+                // Casco Pilota
+                ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI*2);
+                ctx.fillStyle = '#f1c40f'; ctx.fill();
+                ctx.restore();
+            };
+
+            if(p1) drawBumperCar(p1); if(p2) drawBumperCar(p2);
+        }
+
+        // ==========================================
+        //             CORE GAME LOOP
+        // ==========================================
+        function startGame(gameToStart) {
+            document.getElementById('menu-screen').classList.add('hidden'); 
+            document.getElementById('gameover-screen').classList.add('hidden'); 
+            document.getElementById('ui-layer').classList.remove('hidden');
+            
+            document.getElementById('s1').innerText = 0; 
+            document.getElementById('s2').innerText = 0;
+            
+            currentState = gameToStart;
+            
+            if (currentState === STATE.TANKS) initTanks();
+            else if (currentState === STATE.SUMO) initSumo();
+        }
+
+        function backToMenu() { 
+            document.getElementById('gameover-screen').classList.add('hidden'); 
+            document.getElementById('menu-screen').classList.remove('hidden'); 
+            currentState = STATE.MENU; 
+        }
+
+        function update() {
+            if (currentState === STATE.TANKS) updateTanks();
+            else if (currentState === STATE.SUMO) updateSumo();
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (currentState === STATE.MENU) { drawProceduralBackground(); return; }
+            if (currentState === STATE.MENU) return; 
 
-            drawProceduralBackground();
-            drawBasesAndAmmo();
-            
-            if(p1) drawTrails(p1); if(p2) drawTrails(p2);
-            
-            drawObstacles();
-            drawPowerups();
+            if (currentState === STATE.TANKS) drawTanks();
+            else if (currentState === STATE.SUMO) drawSumo();
 
-            bullets.forEach(b => drawBullet(b));
-            if (p1) drawTank(p1); if (p2) drawTank(p2);
-
+            // Joypad Overlay UI (Comune a tutti i giochi)
             for (const key in touchAreas) {
                 let a = touchAreas[key];
+                // Nascondi i pulsanti di sparo se siamo in Sumo
+                if (currentState === STATE.SUMO && key.includes('Shoot')) continue;
+
                 if (key.includes('Move')) {
                     ctx.beginPath(); ctx.arc(a.cx, a.cy, a.r, 0, Math.PI*2); ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.fill(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 2; ctx.stroke();
                     ctx.beginPath(); ctx.arc(a.cx + a.dx, a.cy + a.dy, a.r/2, 0, Math.PI*2); ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fill(); 
-                } 
+                } else if (key.includes('Shoot') && a.pressed) {
+                    ctx.beginPath(); ctx.arc(a.cx, a.cy, a.r*0.8, 0, Math.PI*2); ctx.fillStyle = 'rgba(255, 71, 87, 0.5)'; ctx.fill();
+                }
             }
         }
 
