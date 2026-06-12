@@ -3,30 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>234 Player Hub - MultiGame</title>
+    <title>234 Player Hub - 4P One Button</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; touch-action: none; }
+        body { margin: 0; padding: 0; background-color: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
         #game-container { position: relative; width: 100vw; height: 100vh; max-width: 1024px; max-height: 768px; box-shadow: 0 0 50px rgba(0,0,0,0.8); background-color: #2c3e50; overflow: hidden; }
         canvas { width: 100%; height: 100%; display: block; border-radius: 10px; }
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
-        .score-board { display: flex; justify-content: space-between; padding: 15px 40px; font-size: 38px; font-weight: 900; text-shadow: 3px 3px 6px rgba(0,0,0,0.7); }
-        #p1-score-text { color: #ff4757; } #p2-score-text { color: #1e90ff; }
-        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 46, 0.95); pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; }
+        .score-board { display: flex; justify-content: center; gap: 40px; padding: 15px; font-size: 38px; font-weight: 900; text-shadow: 3px 3px 6px rgba(0,0,0,0.7); }
+        .s-p1 { color: #ff4757; } .s-p2 { color: #1e90ff; } .s-p3 { color: #2ed573; } .s-p4 { color: #f1c40f; }
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26, 26, 46, 0.95); pointer-events: auto; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s; z-index: 10;}
         .hidden { opacity: 0; pointer-events: none !important; }
-        h1 { font-size: 60px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 5px 15px rgba(0,0,0,0.5);}
-        h2 { color: #f1c40f; margin-bottom: 40px; }
-        .btn-group { display: flex; gap: 20px; flex-direction: column; align-items: center; }
+        h1 { font-size: 50px; margin: 0 0 10px 0; text-transform: uppercase; letter-spacing: 2px; text-shadow: 0 5px 15px rgba(0,0,0,0.5);}
         
-        .game-card-container { display: flex; gap: 30px; margin-bottom: 30px;}
-        .game-card { width: 200px; padding: 20px; background: #34495e; border-radius: 15px; text-align: center; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; border: 4px solid transparent;}
-        .game-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .game-card.tanks { border-color: #2ed573; }
-        .game-card.sumo { border-color: #f39c12; }
-        .game-card h3 { margin: 0 0 10px 0; font-size: 24px; }
-        .game-card p { margin: 0; font-size: 14px; color: #bdc3c7; }
+        .menu-row { display: flex; gap: 20px; margin-bottom: 20px; flex-wrap: wrap; justify-content: center;}
+        .game-card { width: 160px; padding: 15px; background: #34495e; border-radius: 15px; text-align: center; cursor: pointer; transition: transform 0.2s; border: 4px solid transparent;}
+        .game-card:active { transform: scale(0.95); }
+        .game-card h3 { margin: 0 0 5px 0; font-size: 20px; }
+        .game-card p { margin: 0; font-size: 12px; color: #bdc3c7; }
+        
+        .controls-panel { display: flex; gap: 10px; margin-bottom: 20px; background: #2c3e50; padding: 10px; border-radius: 10px;}
+        .control-btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; background: #7f8c8d; color: white;}
+        .control-btn.active { background: #e74c3c; }
 
-        button { padding: 15px 40px; font-size: 24px; font-weight: bold; color: white; background: #3498db; border: none; border-radius: 50px; cursor: pointer; box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4); text-transform: uppercase; transition: transform 0.1s; width: 320px;}
-        button:active { transform: scale(0.95); }
+        .tournament-box { margin-top: 20px; padding: 20px; background: rgba(0,0,0,0.5); border: 2px dashed #f1c40f; border-radius: 15px; text-align: center; position: relative; width: 600px;}
+        .coming-soon-badge { position: absolute; top: -15px; right: -15px; background: #e74c3c; padding: 5px 15px; border-radius: 20px; font-weight: bold; transform: rotate(15deg); box-shadow: 0 5px 10px rgba(0,0,0,0.5);}
+        .tourney-settings { display: flex; justify-content: center; gap: 15px; opacity: 0.5; pointer-events: none; margin-top: 15px;}
+        .t-btn { padding: 5px 15px; background: #34495e; border: 1px solid #7f8c8d; color: white; border-radius: 5px;}
     </style>
 </head>
 <body>
@@ -34,472 +36,376 @@
         <canvas id="gameCanvas" width="1024" height="768"></canvas>
         <div id="ui-layer" class="hidden">
             <div class="score-board">
-                <span id="p1-score-text">P1: <span id="s1">0</span>/3</span>
-                <span id="p2-score-text">P2: <span id="s2">0</span>/3</span>
+                <span class="s-p1" id="ui-s0">P1: 0</span>
+                <span class="s-p2" id="ui-s1">P2: 0</span>
+                <span class="s-p3 hidden" id="ui-s2">P3: 0</span>
+                <span class="s-p4 hidden" id="ui-s3">P4: 0</span>
             </div>
         </div>
         
         <div id="menu-screen" class="overlay-screen">
             <h1>Mini Games Hub</h1>
-            <h2>Seleziona un Gioco</h2>
             
-            <div class="game-card-container">
-                <div class="game-card tanks" onclick="startGame(STATE.TANKS)" ontouchstart="startGame(STATE.TANKS); event.preventDefault();">
-                    <h3 style="color: #2ed573;">Tank Battle</h3>
-                    <p>Combattimento strategico con potenziamenti e proiettili.</p>
+            <div class="controls-panel">
+                <span>Giocatori:</span>
+                <button class="control-btn" id="btn-2p" onclick="setPlayers(2)">2P</button>
+                <button class="control-btn" id="btn-3p" onclick="setPlayers(3)">3P</button>
+                <button class="control-btn active" id="btn-4p" onclick="setPlayers(4)">4P</button>
+            </div>
+
+            <div class="menu-row">
+                <div class="game-card" style="border-color: #2ed573;" onclick="startGame(STATE.TANKS)">
+                    <h3 style="color: #2ed573;">Tanks</h3><p>Spara e Muoviti</p>
                 </div>
-                <div class="game-card sumo" onclick="startGame(STATE.SUMO)" ontouchstart="startGame(STATE.SUMO); event.preventDefault();">
-                    <h3 style="color: #f39c12;">Bumper Sumo</h3>
-                    <p>Spingi l'avversario fuori dall'arena circolare!</p>
+                <div class="game-card" style="border-color: #f39c12;" onclick="startGame(STATE.SUMO)">
+                    <h3 style="color: #f39c12;">Sumo</h3><p>Spingi fuori!</p>
+                </div>
+                <div class="game-card" style="border-color: #9b59b6;" onclick="startGame(STATE.SHAPES)">
+                    <h3 style="color: #9b59b6;">Area Max</h3><p>Trova il più grande</p>
                 </div>
             </div>
 
-            <button onclick="nextMap()" ontouchstart="nextMap(); event.preventDefault();" id="map-btn">Tanks Map: Sabbia</button>
+            <div class="tournament-box">
+                <div class="coming-soon-badge">COMING SOON</div>
+                <h3 style="margin:0; color:#f1c40f;">MODALITÀ TORNEO</h3>
+                <p style="margin:5px 0 0 0; font-size:14px;">Sfida a punti con classifica finale e rotazione giochi!</p>
+                <div class="tourney-settings">
+                    <button class="t-btn">Round: 3/5/7/9</button>
+                    <button class="t-btn">Giochi: Random</button>
+                    <button class="t-btn">Avvia Torneo</button>
+                </div>
+            </div>
         </div>
 
         <div id="gameover-screen" class="overlay-screen hidden">
-            <h1 id="winner-text">P1 VINCE!</h1>
-            <button onclick="backToMenu()" ontouchstart="backToMenu(); event.preventDefault();">Torna al Menu</button>
+            <h1 id="winner-text">VINCE!</h1>
+            <button class="control-btn" style="background:#3498db; font-size:24px; padding:15px 40px;" onclick="backToMenu()">Torna al Menu</button>
         </div>
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-
-        // --- STATI GLOBALI ---
-        const STATE = { MENU: 0, TANKS: 1, SUMO: 2, GAMEOVER: 3 };
+        const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
+        const STATE = { MENU: 0, TANKS: 1, SUMO: 2, SHAPES: 3, GAMEOVER: 4 };
         let currentState = STATE.MENU;
+        let numPlayers = 4;
         const MAX_SCORE = 3; 
 
-        // Variabili condivise
-        let p1, p2;
+        // Colori Ufficiali Giocatori: P1(Rosso), P2(Blu), P3(Verde), P4(Giallo)
+        const P_COLORS = ['#ff4757', '#1e90ff', '#2ed573', '#f1c40f'];
+        let players = [];
 
         // ==========================================
-        //         SISTEMA INPUT (TOUCH E TASTIERA)
+        //         SISTEMA INPUT "ONE BUTTON"
         // ==========================================
-        const keys = {};
-        window.addEventListener('keydown', e => keys[e.code] = true); window.addEventListener('keyup', e => keys[e.code] = false);
+        const buttons = [
+            { cx: 100, cy: 668, r: 80, color: P_COLORS[0], pressed: false, justPressed: false, justReleased: false, active: true }, // Bottom-Left (P1)
+            { cx: 924, cy: 100, r: 80, color: P_COLORS[1], pressed: false, justPressed: false, justReleased: false, active: true }, // Top-Right (P2)
+            { cx: 100, cy: 100, r: 80, color: P_COLORS[2], pressed: false, justPressed: false, justReleased: false, active: false }, // Top-Left (P3)
+            { cx: 924, cy: 668, r: 80, color: P_COLORS[3], pressed: false, justPressed: false, justReleased: false, active: false }  // Bottom-Right (P4)
+        ];
 
-        const touchAreas = {
-            p1Move: { cx: 150, cy: 618, r: 80, touchId: null, dx: 0, dy: 0 }, 
-            p1Shoot: { cx: 70, cy: 698, r: 45, touchId: null, pressed: false },
-            p2Move: { cx: 874, cy: 150, r: 80, touchId: null, dx: 0, dy: 0 }, 
-            p2Shoot: { cx: 954, cy: 70, r: 45, touchId: null, pressed: false }
-        };
+        // Simula i tasti su PC per test (Q=P1, M=P2, Z=P3, P=P4)
+        const keyMap = {'KeyZ': 0, 'KeyM': 1, 'KeyQ': 2, 'KeyP': 3};
+        window.addEventListener('keydown', e => { if(keyMap[e.code] !== undefined && buttons[keyMap[e.code]].active) { let b = buttons[keyMap[e.code]]; if(!b.pressed){ b.pressed = true; b.justPressed = true; }}});
+        window.addEventListener('keyup', e => { if(keyMap[e.code] !== undefined && buttons[keyMap[e.code]].active) { let b = buttons[keyMap[e.code]]; b.pressed = false; b.justReleased = true; }});
 
-        function getTouchPos(canvas, evt, touch) {
-            const rect = canvas.getBoundingClientRect(); 
-            return { x: (touch.clientX - rect.left) * (canvas.width / rect.width), y: (touch.clientY - rect.top) * (canvas.height / rect.height) };
+        function getTouchPos(e, touch) { const rect = canvas.getBoundingClientRect(); return { x: (touch.clientX - rect.left) * (canvas.width / rect.width), y: (touch.clientY - rect.top) * (canvas.height / rect.height) }; }
+
+        canvas.addEventListener('touchstart', e => { if (currentState===STATE.MENU || currentState===STATE.GAMEOVER) return; e.preventDefault(); for (let t of e.changedTouches) { let pos = getTouchPos(e, t); buttons.forEach((b, i) => { if (b.active && Math.hypot(pos.x - b.cx, pos.y - b.cy) < b.r * 1.5) { b.pressed = true; b.justPressed = true; b.touchId = t.identifier; } }); } }, {passive: false});
+        canvas.addEventListener('touchend', e => { for (let t of e.changedTouches) { buttons.forEach(b => { if (b.touchId === t.identifier) { b.pressed = false; b.justReleased = true; b.touchId = null; } }); } });
+        canvas.addEventListener('touchcancel', e => { for (let t of e.changedTouches) { buttons.forEach(b => { if (b.touchId === t.identifier) { b.pressed = false; b.justReleased = true; b.touchId = null; } }); } });
+
+        function resetInputFrame() { buttons.forEach(b => { b.justPressed = false; b.justReleased = false; }); }
+
+        function setPlayers(n) {
+            numPlayers = n;
+            document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-'+n+'p').classList.add('active');
+            buttons[2].active = (n >= 3); buttons[3].active = (n === 4);
         }
 
-        canvas.addEventListener('touchstart', handleTouchStart, {passive: false}); 
-        canvas.addEventListener('touchmove', handleTouchMove, {passive: false}); 
-        canvas.addEventListener('touchend', handleTouchEnd, {passive: false});
-        
-        function handleTouchStart(e) { 
-            if (currentState === STATE.MENU || currentState === STATE.GAMEOVER) return; 
-            e.preventDefault(); 
-            for (let t of e.changedTouches) { 
-                let pos = getTouchPos(canvas, e, t); 
-                for (const key in touchAreas) { 
-                    let a = touchAreas[key]; 
-                    if (Math.hypot(pos.x - a.cx, pos.y - a.cy) < a.r) { 
-                        a.touchId = t.identifier; 
-                        if (key.includes('Shoot')) a.pressed = true; 
-                        if (key.includes('Move')) { a.dx = pos.x - a.cx; a.dy = pos.y - a.cy; } 
-                    } 
-                } 
-            } 
-        }
-        function handleTouchMove(e) { 
-            if (currentState === STATE.MENU || currentState === STATE.GAMEOVER) return; 
-            e.preventDefault(); 
-            for (let t of e.changedTouches) { 
-                let pos = getTouchPos(canvas, e, t); 
-                for (const key in touchAreas) { 
-                    let a = touchAreas[key]; 
-                    if (a.touchId === t.identifier && key.includes('Move')) { 
-                        let dist = Math.hypot(pos.x - a.cx, pos.y - a.cy); let maxDist = a.r / 2; 
-                        if (dist > maxDist) { a.dx = ((pos.x - a.cx) / dist) * maxDist; a.dy = ((pos.y - a.cy) / dist) * maxDist; } 
-                        else { a.dx = pos.x - a.cx; a.dy = pos.y - a.cy; } 
-                    } 
-                } 
-            } 
-        }
-        function handleTouchEnd(e) { 
-            for (let t of e.changedTouches) { 
-                for (const key in touchAreas) { 
-                    let a = touchAreas[key]; 
-                    if (a.touchId === t.identifier) { 
-                        a.touchId = null; 
-                        if (key.includes('Shoot')) a.pressed = false; 
-                        if (key.includes('Move')) { a.dx = 0; a.dy = 0; } 
-                    } 
-                } 
-            } 
+        function updateScoreUI() {
+            for(let i=0; i<4; i++) {
+                let el = document.getElementById('ui-s'+i);
+                if(i < numPlayers) { el.classList.remove('hidden'); el.innerText = `P${i+1}: ${players[i].score}`; } 
+                else { el.classList.add('hidden'); }
+            }
         }
 
-        // Utility globale
-        function endGame(winnerName) { 
+        function endGame(pIndex) { 
             currentState = STATE.GAMEOVER; 
             document.getElementById('ui-layer').classList.add('hidden'); 
             document.getElementById('gameover-screen').classList.remove('hidden'); 
-            document.getElementById('winner-text').innerText = `${winnerName} VINCE!`; 
-            document.getElementById('winner-text').style.color = winnerName === 'P1' ? '#ff4757' : '#1e90ff'; 
+            document.getElementById('winner-text').innerText = `P${pIndex+1} VINCE!`; 
+            document.getElementById('winner-text').style.color = P_COLORS[pIndex]; 
         }
-        function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) { let tX = cx; let tY = cy; if (cx < rx) tX = rx; else if (cx > rx + rw) tX = rx + rw; if (cy < ry) tY = ry; else if (cy > ry + rh) tY = ry + rh; return ((cx - tX)*(cx - tX) + (cy - tY)*(cy - tY)) <= (cr*cr); }
 
         // ==========================================
-        //             MINIGIOCO 1: TANKS
+        //             1. TANKS GAME
         // ==========================================
-        let bullets, powerups, obstacles, powerupTimer;
-        const RESPAWN_TIME = 300; const RELOAD_TIME = 120; const INVULNERABLE_TIME = 120; const POWERUP_INTERVAL = 600; 
-        const powerupTypes = ['bounce', 'destroy_walls', 'fire', 'pierce', 'ghost', 'stealth'];
-        let currentMapIndex = 0;
-
-        function buildCrossMap() { let obs = []; let cx = 512; let cy = 384; for(let i=-4; i<=4; i++) { obs.push({x: cx + i*34 - 16, y: cy - 16, w: 32, h: 32, type: 'wall'}); if(i!==0) obs.push({x: cx - 16, y: cy + i*34 - 16, w: 32, h: 32, type: 'wall'}); } obs.push({x: 200, y: 150, r: 25, type: 'tree'}, {x: 824, y: 618, r: 25, type: 'tree'}, {x: 824, y: 150, r: 25, type: 'tree'}, {x: 200, y: 618, r: 25, type: 'tree'}); return obs; }
-        function buildArenaMap() { return [{x: 312, y: 200, w: 400, h: 32, type: 'iron'}, {x: 312, y: 536, w: 400, h: 32, type: 'iron'}, {x: 200, y: 284, w: 32, h: 200, type: 'iron'}, {x: 792, y: 284, w: 32, h: 200, type: 'iron'}]; }
-        const MAPS = [
-            { name: "Sabbia", bg: '#e8dcb8', line: '#d9ccaa', theme: 'sand', getObs: buildCrossMap },
-            { name: "Fabbrica", bg: '#b2bec3', line: '#95a5a6', theme: 'concrete', getObs: buildArenaMap }
-        ];
-
-        function nextMap() { currentMapIndex = (currentMapIndex + 1) % MAPS.length; document.getElementById('map-btn').innerText = `Tanks Map: ${MAPS[currentMapIndex].name}`; }
-
+        let bullets = [], powerups = [], obstacles = [], powerupTimer = 0;
+        
         function initTanks() {
-            p1 = { baseX: 120, baseY: 648, x: 120, y: 648, angle: -Math.PI/4, radius: 24, color: '#ff4757', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0, ammo: 5, reloadTimer: 0, cooldown: 0, abilities: { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0, stealth: 0 }, trails: [] };
-            p2 = { baseX: 904, baseY: 120, x: 904, y: 120, angle: Math.PI - Math.PI/4, radius: 24, color: '#1e90ff', score: 0, isDead: false, respawnTimer: 0, invulnerable: 0, ammo: 5, reloadTimer: 0, cooldown: 0, abilities: { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0, stealth: 0 }, trails: [] };
-            bullets = []; powerups = []; powerupTimer = POWERUP_INTERVAL;
-            obstacles = MAPS[currentMapIndex].getObs();
+            let spawns = [ {x:150, y:618, a:-Math.PI/4}, {x:874, y:150, a:Math.PI-Math.PI/4}, {x:150, y:150, a:Math.PI/4}, {x:874, y:618, a:Math.PI+Math.PI/4} ];
+            players = [];
+            for(let i=0; i<numPlayers; i++) {
+                players.push({ id: i, x: spawns[i].x, y: spawns[i].y, angle: spawns[i].a, rotDir: 1, color: P_COLORS[i], score: 0, isDead: false, respawnTimer: 0, ammo: 5, reloadTimer: 0, cooldown: 0, trails: [], abilities: { bounce: 0, destroy_walls: 0, pierce: 0, ghost: 0 } });
+            }
+            bullets = []; powerups = []; obstacles = [ {x: 412, y: 150, w: 200, h: 40, type: 'wall'}, {x: 412, y: 578, w: 200, h: 40, type: 'wall'}, {x: 300, y: 300, w: 40, h: 168, type: 'wall'}, {x: 684, y: 300, w: 40, h: 168, type: 'wall'} ];
         }
 
         function updateTanks() {
             powerupTimer--;
-            if (powerupTimer <= 0) { powerups.push({ x: Math.random() * (canvas.width - 300) + 150, y: Math.random() * (canvas.height - 300) + 150, r: 16, type: powerupTypes[Math.floor(Math.random() * powerupTypes.length)] }); powerupTimer = POWERUP_INTERVAL; }
+            if(powerupTimer <= 0) { powerups.push({ x: Math.random()*600+200, y: Math.random()*400+180, r: 16, type: ['bounce','destroy_walls','ghost','pierce'][Math.floor(Math.random()*4)] }); powerupTimer = 400; }
 
-            const handleTankPlayer = (p, controls, otherP) => {
-                if (p.isDead) {
-                    p.respawnTimer--;
-                    if (p.respawnTimer <= 0) { p.isDead = false; p.x = p.baseX; p.y = p.baseY; p.invulnerable = INVULNERABLE_TIME; p.ammo = 5; p.abilities = { bounce: 0, destroy_walls: 0, fire: 0, pierce: 0, ghost: 0, stealth: 0 }; }
-                    return;
+            players.forEach((p, i) => {
+                if (p.isDead) { p.respawnTimer--; if(p.respawnTimer <= 0) { p.isDead = false; p.ammo = 5; p.abilities = { bounce: 0, destroy_walls: 0, pierce: 0, ghost: 0 }; } return; }
+                
+                let btn = buttons[i];
+                if(p.cooldown > 0) p.cooldown--;
+                if(p.ammo < 5) { p.reloadTimer++; if(p.reloadTimer>120){ p.ammo++; p.reloadTimer=0;} }
+                for(let a in p.abilities) { if(a !== 'pierce' && p.abilities[a]>0) p.abilities[a]--; }
+
+                // ONE BUTTON LOGIC: TANKS
+                if (btn.justReleased) p.rotDir *= -1; // Inverti rotazione al rilascio
+                
+                let oldX = p.x; let oldY = p.y;
+                if (!btn.pressed) {
+                    p.angle += 0.045 * p.rotDir; // Ruota automaticamente
+                } else {
+                    p.x += Math.cos(p.angle) * 4; // Avanza
+                    p.y += Math.sin(p.angle) * 4;
+                    if(Math.random()<0.3) p.trails.push({x: p.x, y: p.y, a: p.angle, alpha: 0.6});
+                    
+                    // Sparo sul "Tap" iniziale
+                    if (btn.justPressed && p.cooldown <= 0 && p.ammo > 0) {
+                        bullets.push({ x: p.x + Math.cos(p.angle)*35, y: p.y + Math.sin(p.angle)*35, vx: Math.cos(p.angle)*12, vy: Math.sin(p.angle)*12, owner: p, r: 6, dead: false, wallDestroyer: p.abilities.destroy_walls>0, bounces: p.abilities.bounce>0?2:0, pierce: p.abilities.pierce>0 });
+                        p.cooldown = 25; p.ammo--;
+                        if(p.abilities.pierce > 0) { p.abilities.pierce--; if(p.abilities.pierce===0) p.ammo=5; }
+                    }
                 }
+                
+                p.trails.forEach(t => t.alpha -= 0.01); p.trails = p.trails.filter(t => t.alpha>0);
+                if (p.x < 30) p.x = 30; if (p.x > canvas.width-30) p.x = canvas.width-30; if (p.y < 30) p.y = 30; if (p.y > canvas.height-30) p.y = canvas.height-30;
 
-                for (let ab in p.abilities) { if (ab !== 'pierce' && p.abilities[ab] > 0) p.abilities[ab]--; }
-                if (p.invulnerable > 0) p.invulnerable--; if (p.cooldown > 0) p.cooldown--;
-                if (p.ammo < 5) { p.reloadTimer++; if (p.reloadTimer >= RELOAD_TIME) { p.ammo++; p.reloadTimer = 0; } }
-
-                let pSpeed = 3.5; let oldX = p.x; let oldY = p.y; let isMoving = false;
-
-                if (controls.left || controls.right || controls.up || controls.down) {
-                    if (controls.left) p.angle -= 0.06; if (controls.right) p.angle += 0.06;
-                    if (controls.up) { p.x += Math.cos(p.angle) * pSpeed; p.y += Math.sin(p.angle) * pSpeed; isMoving = true; }
-                    if (controls.down) { p.x -= Math.cos(p.angle) * pSpeed; p.y -= Math.sin(p.angle) * pSpeed; isMoving = true; }
-                } else if (controls.touchX !== 0 || controls.touchY !== 0) {
-                    p.angle = Math.atan2(controls.touchY, controls.touchX);
-                    p.x += Math.cos(p.angle) * pSpeed; p.y += Math.sin(p.angle) * pSpeed; isMoving = true;
-                }
-
-                if (isMoving && Math.random() < 0.3) p.trails.push({ x: p.x, y: p.y, angle: p.angle, alpha: 0.6 });
-                p.trails.forEach(t => t.alpha -= 0.005); p.trails = p.trails.filter(t => t.alpha > 0);
-
-                if (p.x - p.radius < 0) p.x = p.radius; if (p.x + p.radius > canvas.width) p.x = canvas.width - p.radius;
-                if (p.y - p.radius < 0) p.y = p.radius; if (p.y + p.radius > canvas.height) p.y = canvas.height - p.radius;
-
-                let inObstacle = false;
                 obstacles.forEach(obs => {
-                    let hit = (obs.type === 'tree') ? (Math.hypot(p.x - obs.x, p.y - obs.y) < p.radius + obs.r) : circleRectCollide(p.x, p.y, p.radius, obs.x, obs.y, obs.w, obs.h);
-                    if (hit) { if (p.abilities.ghost <= 0 || obs.type === 'iron') { p.x = oldX; p.y = oldY; } else { inObstacle = true; } }
+                    let cx = p.x < obs.x ? obs.x : p.x > obs.x+obs.w ? obs.x+obs.w : p.x;
+                    let cy = p.y < obs.y ? obs.y : p.y > obs.y+obs.h ? obs.y+obs.h : p.y;
+                    if (Math.hypot(p.x-cx, p.y-cy) <= 24) { if(p.abilities.ghost <= 0) { p.x = oldX; p.y = oldY; } }
                 });
 
-                if (p.abilities.ghost === 1 && inObstacle) {
-                    for (let o = obstacles.length - 1; o >= 0; o--) {
-                        let hit = (obstacles[o].type === 'tree') ? (Math.hypot(p.x - obstacles[o].x, p.y - obstacles[o].y) < p.radius + obstacles[o].r) : circleRectCollide(p.x, p.y, p.radius, obstacles[o].x, obstacles[o].y, obstacles[o].w, obstacles[o].h);
-                        if (hit) { if (obstacles[o].type === 'wall') obstacles.splice(o, 1); else { p.x = oldX; p.y = oldY; } }
-                    }
-                }
-
-                if (!otherP.isDead && Math.hypot(p.x - otherP.x, p.y - otherP.y) < p.radius + otherP.radius) { p.x = oldX; p.y = oldY; }
-
-                if (controls.shoot && p.cooldown <= 0) {
-                    if (p.ammo > 0 || p.abilities.fire > 0) {
-                        bullets.push({ 
-                            x: p.x + Math.cos(p.angle) * 38, y: p.y + Math.sin(p.angle) * 38, vx: Math.cos(p.angle) * 12, vy: Math.sin(p.angle) * 12, angle: p.angle,
-                            owner: p, radius: 6, dead: false, wallDestroyer: (p.abilities.destroy_walls > 0), bounces: (p.abilities.bounce > 0) ? 2 : 0, pierce: (p.abilities.pierce > 0), fire: (p.abilities.fire > 0)
-                        });
-                        p.cooldown = 20; 
-                        if (p.abilities.fire <= 0) p.ammo--;
-                        if (p.abilities.pierce > 0) { p.abilities.pierce--; if(p.abilities.pierce <= 0) p.ammo = 5; }
-                    }
-                }
-
-                for (let i = powerups.length - 1; i >= 0; i--) {
-                    let pu = powerups[i];
-                    if (Math.hypot(p.x - pu.x, p.y - pu.y) < p.radius + pu.r) {
-                        if (pu.type === 'pierce') p.abilities[pu.type] = 3; else p.abilities[pu.type] = 300;
-                        p.ammo = 5; powerups.splice(i, 1);
-                    }
-                }
-            };
-
-            handleTankPlayer(p1, { left: keys['KeyA'], right: keys['KeyD'], up: keys['KeyW'], down: keys['KeyS'], shoot: (keys['Space'] || touchAreas.p1Shoot.pressed), touchX: touchAreas.p1Move.dx, touchY: touchAreas.p1Move.dy }, p2);
-            handleTankPlayer(p2, { left: keys['ArrowLeft'], right: keys['ArrowRight'], up: keys['ArrowUp'], down: keys['ArrowDown'], shoot: (keys['Enter'] || touchAreas.p2Shoot.pressed), touchX: touchAreas.p2Move.dx, touchY: touchAreas.p2Move.dy }, p1);
-
-            for (let i = 0; i < bullets.length; i++) {
-                let b = bullets[i]; if (b.dead) continue;
-                b.x += b.vx; b.y += b.vy; b.angle = Math.atan2(b.vy, b.vx);
-
-                if (b.x < 0 || b.x > canvas.width) { if (b.bounces > 0) { b.vx *= -1; b.bounces--; b.x = b.x < 0 ? 0 : canvas.width; } else b.dead = true; }
-                if (b.y < 0 || b.y > canvas.height) { if (b.bounces > 0) { b.vy *= -1; b.bounces--; b.y = b.y < 0 ? 0 : canvas.height; } else b.dead = true; }
-
-                for (let o = obstacles.length - 1; o >= 0; o--) {
-                    let obs = obstacles[o];
-                    let hit = (obs.type === 'tree') ? (Math.hypot(b.x - obs.x, b.y - obs.y) < b.radius + obs.r) : circleRectCollide(b.x, b.y, b.radius, obs.x, obs.y, obs.w, obs.h);
-                    if (hit) {
-                        if (b.pierce) { }
-                        else if (b.wallDestroyer && obs.type === 'wall') { obstacles.splice(o, 1); b.dead = true; } 
-                        else if (b.bounces > 0) {
-                            if(obs.type === 'tree') { b.vx *= -1; b.vy *= -1; }
-                            else { let cX = Math.max(obs.x, Math.min(b.x, obs.x + obs.w)); let cY = Math.max(obs.y, Math.min(b.y, obs.y + obs.h)); if (Math.abs(b.x - cX) > Math.abs(b.y - cY)) b.vx *= -1; else b.vy *= -1; }
-                            b.bounces--;
-                        } else { b.dead = true; }
-                    }
-                }
-
-                let target = b.owner === p1 ? p2 : p1;
-                if (!b.dead && !target.isDead && target.invulnerable <= 0 && Math.hypot(b.x - target.x, b.y - target.y) < target.radius) {
-                    b.owner.score++; document.getElementById(b.owner === p1 ? 's1' : 's2').innerText = b.owner.score;
-                    if (!b.pierce) b.dead = true; 
-                    target.isDead = true; target.respawnTimer = RESPAWN_TIME; target.trails = [];
-                    if (b.owner.score >= MAX_SCORE) endGame(b.owner === p1 ? 'P1' : 'P2');
-                }
-            }
-            bullets = bullets.filter(b => !b.dead);
-        }
-
-        function drawTanks() {
-            let map = MAPS[currentMapIndex]; ctx.fillStyle = map.bg; ctx.fillRect(0,0, canvas.width, canvas.height);
-            ctx.strokeStyle = map.line; ctx.lineWidth = 6; ctx.lineCap = 'round';
-            if(map.theme === 'sand') { for(let y = 30; y < canvas.height; y += 60) { ctx.beginPath(); for(let x = 0; x <= canvas.width + 40; x += 60) { ctx.quadraticCurveTo(x + 30, y + 20, x + 60, y); } ctx.stroke(); } } 
-            else if (map.theme === 'concrete') { ctx.setLineDash([20, 20]); for(let y = 0; y < canvas.height; y += 100) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); } for(let x = 0; x < canvas.width; x += 100) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke(); } ctx.setLineDash([]); }
-
-            ctx.fillStyle = '#ff4757'; ctx.beginPath(); ctx.moveTo(0, canvas.height); ctx.arc(0, canvas.height, 220, 0, -Math.PI/2, true); ctx.fill();
-            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(70, canvas.height - 70, 45, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = '#1e90ff'; ctx.beginPath(); ctx.moveTo(canvas.width, 0); ctx.arc(canvas.width, 0, 220, Math.PI, Math.PI/2, true); ctx.fill();
-            ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(canvas.width - 70, 70, 45, 0, Math.PI*2); ctx.fill();
-
-            ctx.fillStyle = '#b33939'; ctx.beginPath(); ctx.roundRect(10, canvas.height/2 - 100, 30, 200, 10); ctx.fill();
-            for(let i=0; i<5; i++) { ctx.fillStyle = (i < (p1 ? p1.ammo : 0)) ? '#f1c40f' : '#631e1e'; ctx.fillRect(15, canvas.height/2 + 60 - (i*36), 20, 24); }
-            ctx.fillStyle = '#192a56'; ctx.beginPath(); ctx.roundRect(canvas.width - 40, canvas.height/2 - 100, 30, 200, 10); ctx.fill();
-            for(let i=0; i<5; i++) { ctx.fillStyle = (i < (p2 ? p2.ammo : 0)) ? '#f1c40f' : '#0d152b'; ctx.fillRect(canvas.width - 35, canvas.height/2 + 60 - (i*36), 20, 24); }
-
-            const drawTrails = tank => { tank.trails.forEach(t => { ctx.save(); ctx.translate(t.x, t.y); ctx.rotate(t.angle); ctx.fillStyle = `rgba(0, 0, 0, ${t.alpha * 0.2})`; ctx.fillRect(-22, -22, 44, 8); ctx.fillRect(-22, 14, 44, 8); ctx.restore(); }); };
-            if(p1) drawTrails(p1); if(p2) drawTrails(p2);
-
-            obstacles.forEach(obs => {
-                ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 8; ctx.shadowOffsetX = 4; ctx.shadowOffsetY = 4;
-                if (obs.type === 'wall') { ctx.fillStyle = '#d35400'; ctx.beginPath(); ctx.roundRect(obs.x, obs.y, obs.w, obs.h, 6); ctx.fill(); ctx.strokeStyle = '#e67e22'; ctx.lineWidth = 2; ctx.stroke(); } 
-                else if (obs.type === 'tree') { ctx.save(); ctx.translate(obs.x, obs.y); ctx.fillStyle = '#2ecc71'; ctx.beginPath(); for(let i=0; i<8; i++) { ctx.rotate(Math.PI/4); ctx.lineTo(0, -obs.r); ctx.lineTo(obs.r/3, -obs.r/3); } ctx.fill(); ctx.restore(); } 
-                else if (obs.type === 'iron') { ctx.fillStyle = '#7f8c8d'; ctx.fillRect(obs.x, obs.y, obs.w, obs.h); ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 4; ctx.setLineDash([10, 10]); ctx.strokeRect(obs.x+2, obs.y+2, obs.w-4, obs.h-4); ctx.setLineDash([]); }
-                ctx.shadowColor = 'transparent';
-            });
-
-            const puColors = { 'bounce': '#2ecc71', 'destroy_walls': '#c0392b', 'fire': '#f39c12', 'pierce': '#8e44ad', 'ghost': '#bdc3c7', 'stealth': '#00d2d3' };
-            powerups.forEach(pu => {
-                ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.roundRect(pu.x - pu.r, pu.y - pu.r, pu.r*2, pu.r*2, 6); ctx.fill(); ctx.strokeStyle = '#ecf0f1'; ctx.lineWidth = 2; ctx.stroke();
-                ctx.fillStyle = puColors[pu.type] || '#fff'; ctx.beginPath(); ctx.arc(pu.x, pu.y, pu.r*0.6, 0, Math.PI*2); ctx.fill();
+                powerups.forEach((pu, idx) => { if(Math.hypot(p.x-pu.x, p.y-pu.y) < 40) { if(pu.type==='pierce') p.abilities[pu.type]=3; else p.abilities[pu.type]=300; p.ammo=5; powerups.splice(idx,1); }});
             });
 
             bullets.forEach(b => {
-                ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.angle);
-                if (b.fire) { ctx.beginPath(); ctx.arc(0, 0, b.radius + 4, 0, Math.PI*2); let grad = ctx.createRadialGradient(0,0,0,0,0,b.radius+4); grad.addColorStop(0, '#f1c40f'); grad.addColorStop(1, '#e74c3c'); ctx.fillStyle = grad; ctx.fill(); } 
-                else if (b.pierce) { ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(-8, -6); ctx.lineTo(-8, 6); ctx.fill(); } 
-                else { ctx.fillStyle = '#f39c12'; ctx.beginPath(); ctx.roundRect(-8, -5, 16, 10, 5); ctx.fill(); if (b.wallDestroyer) { ctx.fillStyle = '#c0392b'; ctx.beginPath(); ctx.arc(6, 0, 4, 0, Math.PI*2); ctx.fill(); } if (b.bounces > 0) { ctx.fillStyle = '#2ecc71'; ctx.beginPath(); ctx.arc(6, 0, 4, 0, Math.PI*2); ctx.fill(); } }
+                if(b.dead) return; b.x+=b.vx; b.y+=b.vy;
+                if(b.x<0||b.x>canvas.width) { if(b.bounces>0){b.vx*=-1;b.bounces--;b.x=b.x<0?0:canvas.width;}else b.dead=true; }
+                if(b.y<0||b.y>canvas.height) { if(b.bounces>0){b.vy*=-1;b.bounces--;b.y=b.y<0?0:canvas.height;}else b.dead=true; }
+                
+                obstacles.forEach((obs, idx) => {
+                    let cx = b.x < obs.x ? obs.x : b.x > obs.x+obs.w ? obs.x+obs.w : b.x; let cy = b.y < obs.y ? obs.y : b.y > obs.y+obs.h ? obs.y+obs.h : b.y;
+                    if (Math.hypot(b.x-cx, b.y-cy) <= b.r) {
+                        if(!b.pierce){ if(b.wallDestroyer) { obstacles.splice(idx,1); b.dead=true; } else if(b.bounces>0) { let horiz = Math.abs(b.x-cx)>Math.abs(b.y-cy); if(horiz) b.vx*=-1; else b.vy*=-1; b.bounces--; } else b.dead=true; }
+                    }
+                });
+
+                players.forEach(p => {
+                    if(!b.dead && !p.isDead && b.owner!==p && Math.hypot(b.x-p.x, b.y-p.y)<30) {
+                        b.owner.score++; updateScoreUI(); if(!b.pierce) b.dead = true;
+                        p.isDead = true; p.respawnTimer = 180; p.trails = [];
+                        if(b.owner.score >= MAX_SCORE) endGame(b.owner.id);
+                    }
+                });
+            });
+            bullets = bullets.filter(b=>!b.dead);
+        }
+
+        function drawTanks() {
+            ctx.fillStyle = '#e8dcb8'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            obstacles.forEach(o => { ctx.fillStyle='#d35400'; ctx.beginPath(); ctx.roundRect(o.x,o.y,o.w,o.h,5); ctx.fill(); });
+            powerups.forEach(pu => { ctx.fillStyle='#34495e'; ctx.beginPath(); ctx.roundRect(pu.x-pu.r,pu.y-pu.r,pu.r*2,pu.r*2,4); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(pu.x,pu.y,pu.r*0.5,0,Math.PI*2); ctx.fill(); });
+            
+            bullets.forEach(b => { ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(Math.atan2(b.vy,b.vx)); ctx.fillStyle='#f39c12'; ctx.beginPath(); ctx.roundRect(-8,-4,16,8,4); ctx.fill(); ctx.restore(); });
+
+            players.forEach(p => {
+                if(p.isDead) return;
+                p.trails.forEach(t=>{ ctx.save(); ctx.translate(t.x,t.y); ctx.rotate(t.a); ctx.fillStyle=`rgba(0,0,0,${t.alpha*0.2})`; ctx.fillRect(-20,-24,40,8); ctx.fillRect(-20,16,40,8); ctx.restore(); });
+                ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle);
+                if(p.abilities.ghost>0) ctx.globalAlpha=0.5;
+                ctx.fillStyle='#2d3436'; ctx.beginPath(); ctx.roundRect(-24,-26,48,14,4); ctx.fill(); ctx.beginPath(); ctx.roundRect(-24,12,48,14,4); ctx.fill();
+                ctx.fillStyle=p.color; ctx.beginPath(); ctx.roundRect(-18,-18,36,36,8); ctx.fill(); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.stroke();
+                ctx.fillStyle='#718093'; ctx.beginPath(); ctx.roundRect(0,-4,35,8,3); ctx.fill(); ctx.fillStyle='#2f3640'; ctx.beginPath(); ctx.arc(0,0,12,0,Math.PI*2); ctx.fill();
                 ctx.restore();
             });
-
-            const drawSingleTank = tank => {
-                if (tank.isDead) return;
-                ctx.save();
-                if (tank.abilities.stealth > 0) ctx.globalAlpha = 0.2; else if (tank.abilities.ghost > 0) ctx.globalAlpha = 0.5;
-                ctx.translate(tank.x, tank.y); ctx.rotate(tank.angle);
-                ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10; ctx.shadowOffsetX = 5; ctx.shadowOffsetY = 5;
-                ctx.fillStyle = '#2d3436'; ctx.beginPath(); ctx.roundRect(-24, -28, 48, 16, 4); ctx.fill(); ctx.beginPath(); ctx.roundRect(-24, 12, 48, 16, 4); ctx.fill();
-                ctx.fillStyle = '#636e72'; ctx.shadowColor = 'transparent'; for(let i=-20; i<20; i+=8) { ctx.fillRect(i, -28, 4, 16); ctx.fillRect(i, 12, 4, 16); }
-                ctx.shadowColor = 'rgba(0,0,0,0.4)'; ctx.shadowBlur = 5; let bodyGrad = ctx.createLinearGradient(-20, -20, 20, 20); bodyGrad.addColorStop(0, tank.color); bodyGrad.addColorStop(1, '#a4b0be');
-                ctx.fillStyle = bodyGrad; ctx.beginPath(); ctx.roundRect(-20, -20, 40, 40, 10); ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 3; ctx.stroke();
-                ctx.fillStyle = '#718093'; ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.roundRect(0, -6, 40, 12, 4); ctx.fill();
-                let turretGrad = ctx.createRadialGradient(0,0,2, 0,0,16); turretGrad.addColorStop(0, '#2f3640'); turretGrad.addColorStop(1, '#1e272e');
-                ctx.fillStyle = turretGrad; ctx.beginPath(); ctx.arc(0, 0, 16, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#718093'; ctx.beginPath(); ctx.arc(-4, 0, 8, 0, Math.PI*2); ctx.fill(); ctx.restore();
-                if (tank.invulnerable > 0) { ctx.beginPath(); ctx.arc(tank.x, tank.y, 45, 0, Math.PI * 2); ctx.strokeStyle = `rgba(255, 255, 255, 0.8)`; ctx.lineWidth = 4; ctx.stroke(); }
-            };
-            if(p1) drawSingleTank(p1); if(p2) drawSingleTank(p2);
         }
 
         // ==========================================
-        //             MINIGIOCO 2: SUMO
+        //             2. SUMO GAME
         // ==========================================
-        const ARENA_CENTER = { x: 512, y: 384, r: 320 };
-
+        const ARENA = { x: 512, y: 384, r: 300 };
+        
         function initSumo() {
-            p1 = { x: 300, y: 384, angle: 0, radius: 28, color: '#ff4757', score: 0, vx: 0, vy: 0, isDead: false };
-            p2 = { x: 724, y: 384, angle: Math.PI, radius: 28, color: '#1e90ff', score: 0, vx: 0, vy: 0, isDead: false };
+            players = [];
+            for(let i=0; i<numPlayers; i++) {
+                let a = (Math.PI*2/numPlayers) * i;
+                players.push({ id: i, x: ARENA.x + Math.cos(a)*150, y: ARENA.y + Math.sin(a)*150, angle: a+Math.PI, color: P_COLORS[i], score: 0, isDead: false, vx: 0, vy: 0 });
+            }
         }
 
         function updateSumo() {
-            const handleSumoPlayer = (p, controls) => {
+            let aliveCount = 0; let lastAlive = null;
+
+            players.forEach((p, i) => {
                 if(p.isDead) return;
-                let accel = 0;
-                if (controls.left) p.angle -= 0.08;
-                if (controls.right) p.angle += 0.08;
-                if (controls.up) accel = 0.6;
-                if (controls.down) accel = -0.4;
-
-                if (controls.touchX !== 0 || controls.touchY !== 0) {
-                    p.angle = Math.atan2(controls.touchY, controls.touchX);
-                    accel = 0.6;
-                }
-
-                // Aggiunge slancio continuo
-                p.vx += Math.cos(p.angle) * accel;
-                p.vy += Math.sin(p.angle) * accel;
+                aliveCount++; lastAlive = p;
                 
-                // Attrito
-                p.vx *= 0.95; 
-                p.vy *= 0.95;
-
-                p.x += p.vx; 
-                p.y += p.vy;
-
-                // Controlla se cade fuori
-                if (Math.hypot(p.x - ARENA_CENTER.x, p.y - ARENA_CENTER.y) > ARENA_CENTER.r) {
-                    p.isDead = true;
+                let btn = buttons[i];
+                // ONE BUTTON LOGIC: SUMO
+                if (!btn.pressed) {
+                    p.angle += 0.05; // Ruota sempre e solo in un verso
+                } else {
+                    p.vx += Math.cos(p.angle) * 0.3; // Accelera meno
+                    p.vy += Math.sin(p.angle) * 0.3;
                 }
-            };
 
-            handleSumoPlayer(p1, { left: keys['KeyA'], right: keys['KeyD'], up: keys['KeyW'], down: keys['KeyS'], touchX: touchAreas.p1Move.dx, touchY: touchAreas.p1Move.dy });
-            handleSumoPlayer(p2, { left: keys['ArrowLeft'], right: keys['ArrowRight'], up: keys['ArrowUp'], down: keys['ArrowDown'], touchX: touchAreas.p2Move.dx, touchY: touchAreas.p2Move.dy });
+                p.vx *= 0.94; p.vy *= 0.94; // Attrito alto
+                p.x += p.vx; p.y += p.vy;
 
-            // Fisica degli Scontri (Bumper Collision)
-            if (!p1.isDead && !p2.isDead) {
-                let dx = p2.x - p1.x; let dy = p2.y - p1.y;
-                let dist = Math.hypot(dx, dy);
-                if (dist < p1.radius + p2.radius) {
-                    let overlap = (p1.radius + p2.radius) - dist;
-                    let nx = dx / dist; let ny = dy / dist;
-                    
-                    // Sposta fisicamente per impedire compenetrazione
-                    p1.x -= nx * overlap / 2; p1.y -= ny * overlap / 2;
-                    p2.x += nx * overlap / 2; p2.y += ny * overlap / 2;
+                if (Math.hypot(p.x - ARENA.x, p.y - ARENA.y) > ARENA.r) p.isDead = true;
+            });
 
-                    // Scambio di quantità di moto (Rimbalzo Elastico)
-                    let bounceForce = 1.8;
-                    let v1n = p1.vx * nx + p1.vy * ny;
-                    let v2n = p2.vx * nx + p2.vy * ny;
-                    let dv = v1n - v2n;
-
-                    p1.vx -= dv * nx * bounceForce; p1.vy -= dv * ny * bounceForce;
-                    p2.vx += dv * nx * bounceForce; p2.vy += dv * ny * bounceForce;
+            // Collisioni
+            for(let i=0; i<players.length; i++) {
+                for(let j=i+1; j<players.length; j++) {
+                    let p1 = players[i]; let p2 = players[j];
+                    if(p1.isDead || p2.isDead) continue;
+                    let dx = p2.x - p1.x; let dy = p2.y - p1.y; let dist = Math.hypot(dx,dy);
+                    if(dist < 56) {
+                        let overlap = 56 - dist; let nx = dx/dist; let ny = dy/dist;
+                        p1.x -= nx*overlap/2; p1.y -= ny*overlap/2; p2.x += nx*overlap/2; p2.y += ny*overlap/2;
+                        let dv = (p1.vx*nx + p1.vy*ny) - (p2.vx*nx + p2.vy*ny);
+                        p1.vx -= dv*nx*1.2; p1.vy -= dv*ny*1.2; p2.vx += dv*nx*1.2; p2.vy += dv*ny*1.2;
+                    }
                 }
             }
 
-            // Check Vittoria Turno
-            if (p1.isDead || p2.isDead) {
-                if (p1.isDead && !p2.isDead) { p2.score++; document.getElementById('s2').innerText = p2.score; }
-                else if (p2.isDead && !p1.isDead) { p1.score++; document.getElementById('s1').innerText = p1.score; }
-                
-                if (p1.score >= MAX_SCORE) endGame('P1');
-                else if (p2.score >= MAX_SCORE) endGame('P2');
-                else {
-                    // Reset positions per il nuovo round di sumo
-                    p1.x = 300; p1.y = 384; p1.angle = 0; p1.vx = 0; p1.vy = 0; p1.isDead = false;
-                    p2.x = 724; p2.y = 384; p2.angle = Math.PI; p2.vx = 0; p2.vy = 0; p2.isDead = false;
-                }
+            if(aliveCount <= 1) {
+                if(lastAlive) { lastAlive.score++; updateScoreUI(); if(lastAlive.score >= MAX_SCORE) { endGame(lastAlive.id); return; } }
+                for(let i=0; i<numPlayers; i++) { let a = (Math.PI*2/numPlayers) * i; players[i].x = ARENA.x + Math.cos(a)*150; players[i].y = ARENA.y + Math.sin(a)*150; players[i].angle = a+Math.PI; players[i].vx=0; players[i].vy=0; players[i].isDead=false; }
             }
         }
 
         function drawSumo() {
-            ctx.fillStyle = '#2c3e50'; ctx.fillRect(0,0, canvas.width, canvas.height);
+            ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.beginPath(); ctx.arc(ARENA.x, ARENA.y, ARENA.r+15, 0, Math.PI*2); ctx.fillStyle='#e74c3c'; ctx.fill();
+            ctx.beginPath(); ctx.arc(ARENA.x, ARENA.y, ARENA.r, 0, Math.PI*2); ctx.fillStyle='#ecf0f1'; ctx.fill(); ctx.strokeStyle='#bdc3c7'; ctx.lineWidth=8; ctx.stroke();
             
-            // Arena Sumo
-            ctx.beginPath(); ctx.arc(ARENA_CENTER.x, ARENA_CENTER.y, ARENA_CENTER.r + 20, 0, Math.PI*2);
-            ctx.fillStyle = '#e74c3c'; ctx.fill(); // Bordo Rosso pericolo
-            
-            ctx.beginPath(); ctx.arc(ARENA_CENTER.x, ARENA_CENTER.y, ARENA_CENTER.r, 0, Math.PI*2);
-            ctx.fillStyle = '#ecf0f1'; ctx.fill(); // Piattaforma Bianca
-            ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 10; ctx.stroke();
-            
-            ctx.beginPath(); ctx.arc(ARENA_CENTER.x, ARENA_CENTER.y, 60, 0, Math.PI*2);
-            ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 4; ctx.stroke(); // Centro
-
-            const drawBumperCar = p => {
+            players.forEach(p => {
                 if(p.isDead) return;
-                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.angle);
-                // Bumper di Gomma Nera
-                ctx.beginPath(); ctx.arc(0, 0, p.radius, 0, Math.PI*2);
-                ctx.fillStyle = '#2d3436'; ctx.fill();
-                ctx.strokeStyle = p.color; ctx.lineWidth = 6; ctx.stroke();
-                // Telaio
-                ctx.beginPath(); ctx.roundRect(-15, -12, 30, 24, 6);
-                ctx.fillStyle = p.color; ctx.fill();
-                // Casco Pilota
-                ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI*2);
-                ctx.fillStyle = '#f1c40f'; ctx.fill();
+                ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle);
+                ctx.beginPath(); ctx.arc(0,0,28,0,Math.PI*2); ctx.fillStyle='#2d3436'; ctx.fill(); ctx.strokeStyle=p.color; ctx.lineWidth=5; ctx.stroke();
+                ctx.beginPath(); ctx.roundRect(-15,-12,30,24,6); ctx.fillStyle=p.color; ctx.fill(); ctx.fillStyle='#f1c40f'; ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.fill();
                 ctx.restore();
-            };
-
-            if(p1) drawBumperCar(p1); if(p2) drawBumperCar(p2);
+            });
         }
 
         // ==========================================
-        //             CORE GAME LOOP
+        //             3. SHAPES GAME (Nuovo!)
         // ==========================================
-        function startGame(gameToStart) {
-            document.getElementById('menu-screen').classList.add('hidden'); 
-            document.getElementById('gameover-screen').classList.add('hidden'); 
-            document.getElementById('ui-layer').classList.remove('hidden');
-            
-            document.getElementById('s1').innerText = 0; 
-            document.getElementById('s2').innerText = 0;
-            
-            currentState = gameToStart;
-            
-            if (currentState === STATE.TANKS) initTanks();
-            else if (currentState === STATE.SUMO) initSumo();
+        let s_grid = []; let s_colors = []; let s_maxColorId = -1; let s_state = 'WAIT'; let s_timer = 0;
+
+        function initShapes() {
+            players = []; for(let i=0; i<numPlayers; i++) players.push({ id: i, score: 0 });
+            generateShapesGrid();
         }
 
-        function backToMenu() { 
-            document.getElementById('gameover-screen').classList.add('hidden'); 
-            document.getElementById('menu-screen').classList.remove('hidden'); 
-            currentState = STATE.MENU; 
+        function generateShapesGrid() {
+            s_grid = []; let counts = [0,0,0,0];
+            // Griglia 7x9 (63 blocchi)
+            for(let r=0; r<7; r++) { s_grid[r] = []; for(let c=0; c<9; c++) { let cid = Math.floor(Math.random()*numPlayers); s_grid[r][c] = cid; counts[cid]++; } }
+            // Smoothing per creare "blob"
+            for(let i=0; i<3; i++) {
+                let newGrid = JSON.parse(JSON.stringify(s_grid)); counts = [0,0,0,0];
+                for(let r=0; r<7; r++) { for(let c=0; c<9; c++) {
+                    let neighbors = [];
+                    if(r>0) neighbors.push(s_grid[r-1][c]); if(r<6) neighbors.push(s_grid[r+1][c]); if(c>0) neighbors.push(s_grid[r][c-1]); if(c<8) neighbors.push(s_grid[r][c+1]);
+                    newGrid[r][c] = neighbors[Math.floor(Math.random()*neighbors.length)]; counts[newGrid[r][c]]++;
+                }}
+                s_grid = newGrid;
+            }
+            s_maxColorId = counts.indexOf(Math.max(...counts.slice(0,numPlayers)));
+            s_state = 'PLAY'; s_timer = 0;
+        }
+
+        function updateShapes() {
+            if(s_state === 'WAIT') { s_timer++; if(s_timer > 90) generateShapesGrid(); return; }
+            
+            // Controlla chi preme per primo
+            for(let i=0; i<numPlayers; i++) {
+                if(buttons[i].justPressed) {
+                    if(i === s_maxColorId) { players[i].score++; } else { players[i].score = Math.max(0, players[i].score - 1); }
+                    updateScoreUI();
+                    if(players[i].score >= MAX_SCORE) { endGame(i); return; }
+                    s_state = 'WAIT'; s_timer = 0; break;
+                }
+            }
+        }
+
+        function drawShapes() {
+            ctx.fillStyle = '#ecf0f1'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            let bSize = 60; let ox = (canvas.width - (9*bSize))/2; let oy = (canvas.height - (7*bSize))/2;
+            
+            // Sfondo griglia
+            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(ox-10, oy-10, 9*bSize+20, 7*bSize+20);
+            ctx.fillStyle = '#fff'; ctx.fillRect(ox, oy, 9*bSize, 7*bSize);
+
+            if (s_state === 'PLAY') {
+                for(let r=0; r<7; r++) {
+                    for(let c=0; c<9; c++) {
+                        ctx.fillStyle = P_COLORS[s_grid[r][c]]; ctx.globalAlpha = 0.8;
+                        ctx.fillRect(ox + c*bSize, oy + r*bSize, bSize, bSize); ctx.globalAlpha = 1;
+                        ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.strokeRect(ox + c*bSize, oy + r*bSize, bSize, bSize);
+                    }
+                }
+            } else {
+                ctx.fillStyle = '#2c3e50'; ctx.font = "bold 50px Arial"; ctx.textAlign = "center";
+                ctx.fillText("PREPARATI...", canvas.width/2, canvas.height/2); ctx.textAlign = "left";
+            }
+        }
+
+        // ==========================================
+        //             CORE LOOP & UI
+        // ==========================================
+        function startGame(gameType) {
+            currentState = gameType;
+            document.getElementById('menu-screen').classList.add('hidden'); document.getElementById('ui-layer').classList.remove('hidden');
+            if(gameType === STATE.TANKS) initTanks(); else if(gameType === STATE.SUMO) initSumo(); else if(gameType === STATE.SHAPES) initShapes();
+            updateScoreUI();
+        }
+
+        function backToMenu() { currentState = STATE.MENU; document.getElementById('gameover-screen').classList.add('hidden'); document.getElementById('menu-screen').classList.remove('hidden'); }
+
+        function drawCornerButtons() {
+            buttons.forEach(b => {
+                if(!b.active) return;
+                ctx.beginPath(); ctx.arc(b.cx, b.cy, b.r, 0, Math.PI*2);
+                ctx.fillStyle = b.pressed ? b.color : 'rgba(255,255,255,0.1)'; ctx.fill();
+                ctx.strokeStyle = b.color; ctx.lineWidth = 6; ctx.stroke();
+                // Disegna icona dito (astratta)
+                ctx.fillStyle = b.pressed ? '#fff' : b.color; ctx.beginPath(); ctx.arc(b.cx, b.cy, 20, 0, Math.PI*2); ctx.fill();
+            });
         }
 
         function update() {
-            if (currentState === STATE.TANKS) updateTanks();
-            else if (currentState === STATE.SUMO) updateSumo();
+            if (currentState === STATE.TANKS) updateTanks(); else if (currentState === STATE.SUMO) updateSumo(); else if (currentState === STATE.SHAPES) updateShapes();
+            resetInputFrame(); // Reset degli input a fine frame
         }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (currentState === STATE.MENU) return; 
-
-            if (currentState === STATE.TANKS) drawTanks();
-            else if (currentState === STATE.SUMO) drawSumo();
-
-            // Joypad Overlay UI (Comune a tutti i giochi)
-            for (const key in touchAreas) {
-                let a = touchAreas[key];
-                // Nascondi i pulsanti di sparo se siamo in Sumo
-                if (currentState === STATE.SUMO && key.includes('Shoot')) continue;
-
-                if (key.includes('Move')) {
-                    ctx.beginPath(); ctx.arc(a.cx, a.cy, a.r, 0, Math.PI*2); ctx.fillStyle = 'rgba(255, 255, 255, 0.1)'; ctx.fill(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)'; ctx.lineWidth = 2; ctx.stroke();
-                    ctx.beginPath(); ctx.arc(a.cx + a.dx, a.cy + a.dy, a.r/2, 0, Math.PI*2); ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fill(); 
-                } else if (key.includes('Shoot') && a.pressed) {
-                    ctx.beginPath(); ctx.arc(a.cx, a.cy, a.r*0.8, 0, Math.PI*2); ctx.fillStyle = 'rgba(255, 71, 87, 0.5)'; ctx.fill();
-                }
-            }
+            if (currentState === STATE.MENU) return;
+            if (currentState === STATE.TANKS) drawTanks(); else if (currentState === STATE.SUMO) drawSumo(); else if (currentState === STATE.SHAPES) drawShapes();
+            drawCornerButtons();
         }
 
         function gameLoop() { update(); draw(); requestAnimationFrame(gameLoop); }
