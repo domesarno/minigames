@@ -7,13 +7,9 @@
     <style>
         body { margin: 0; padding: 0; background-color: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
         
-        /* Sistema Anti-Deformazione per iPhone/iPad */
+        /* Sistema Anti-Deformazione Definitivo */
         #game-wrapper { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
-        #game-container { position: relative; background-color: #2c3e50; box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden; }
-        
-        /* Mantiene esattamente le proporzioni 4:3 su qualsiasi schermo */
-        @media (min-aspect-ratio: 1024/768) { #game-container { height: 100vh; width: calc(100vh * (1024/768)); } }
-        @media (max-aspect-ratio: 1024/768) { #game-container { width: 100vw; height: calc(100vw * (768/1024)); } }
+        #game-container { position: relative; background-color: #2c3e50; box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden; aspect-ratio: 1024 / 768; max-width: 100vw; max-height: 100vh; }
         
         canvas { width: 100%; height: 100%; display: block; }
         
@@ -71,7 +67,7 @@
                         <h3 style="color: #f39c12;">Sumo</h3><p>Spingi e Rimpicciolisci</p>
                     </div>
                     <div class="game-card" style="border-color: #9b59b6;" onclick="startGame(STATE.SHAPES)" ontouchstart="startGame(STATE.SHAPES); event.preventDefault();">
-                        <h3 style="color: #9b59b6;">Area Max</h3><p>Trova la forma più grande</p>
+                        <h3 style="color: #9b59b6;">Area Max</h3><p>Tempi di reazione!</p>
                     </div>
                 </div>
 
@@ -99,16 +95,14 @@
         const STATE = { MENU: 0, TANKS: 1, SUMO: 2, SHAPES: 3, GAMEOVER: 4 };
         let currentState = STATE.MENU; let numPlayers = 4; const MAX_SCORE = 3; 
 
-        // Colori: P1(Rosso), P2(Blu), P3(Verde), P4(Giallo)
         const P_COLORS = ['#ff4757', '#1e90ff', '#2ed573', '#f1c40f'];
         let players = [];
 
-        // Bottoni agli estremi angoli per effetto "mangiato"
         const buttons = [
-            { cx: 0, cy: 768, r: 180, color: P_COLORS[0], pressed: false, justPressed: false, justReleased: false, active: true },   // P1 Basso-Sinistra
-            { cx: 1024, cy: 0, r: 180, color: P_COLORS[1], pressed: false, justPressed: false, justReleased: false, active: true }, // P2 Alto-Destra
-            { cx: 0, cy: 0, r: 180, color: P_COLORS[2], pressed: false, justPressed: false, justReleased: false, active: false },    // P3 Alto-Sinistra
-            { cx: 1024, cy: 768, r: 180, color: P_COLORS[3], pressed: false, justPressed: false, justReleased: false, active: false }// P4 Basso-Destra
+            { cx: 0, cy: 768, r: 180, color: P_COLORS[0], pressed: false, justPressed: false, justReleased: false, active: true },   
+            { cx: 1024, cy: 0, r: 180, color: P_COLORS[1], pressed: false, justPressed: false, justReleased: false, active: true }, 
+            { cx: 0, cy: 0, r: 180, color: P_COLORS[2], pressed: false, justPressed: false, justReleased: false, active: false },    
+            { cx: 1024, cy: 768, r: 180, color: P_COLORS[3], pressed: false, justPressed: false, justReleased: false, active: false }
         ];
 
         const keyMap = {'KeyZ': 0, 'KeyM': 1, 'KeyQ': 2, 'KeyP': 3};
@@ -129,7 +123,6 @@
         }
 
         function updateScoreUI() { for(let i=0; i<4; i++) { let el = document.getElementById('ui-s'+i); if(i < numPlayers) { el.classList.remove('hidden'); el.innerText = `P${i+1}: ${players[i].score}`; } else { el.classList.add('hidden'); } } }
-
         function endGame(pIndex) { currentState = STATE.GAMEOVER; document.getElementById('ui-layer').classList.add('hidden'); document.getElementById('gameover-screen').classList.remove('hidden'); document.getElementById('winner-text').innerText = `P${pIndex+1} VINCE!`; document.getElementById('winner-text').style.color = P_COLORS[pIndex]; }
         function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) { let tX = cx; let tY = cy; if (cx < rx) tX = rx; else if (cx > rx + rw) tX = rx + rw; if (cy < ry) tY = ry; else if (cy > ry + rh) tY = ry + rh; return ((cx - tX)*(cx - tX) + (cy - tY)*(cy - tY)) <= (cr*cr); }
 
@@ -147,7 +140,6 @@
 
         function updateTanks() {
             tankTime++;
-            // Primo powerup a 10s (600 frame) al centro. Poi ogni 30s (1800 frame) casuale.
             if(tankTime === 600) powerups.push({ x: 512, y: 384, r: 16, type: ['bounce','destroy_walls','pierce'][Math.floor(Math.random()*3)] });
             else if(tankTime > 600 && (tankTime - 600) % 1800 === 0) powerups.push({ x: Math.random()*600+200, y: Math.random()*400+180, r: 16, type: ['bounce','destroy_walls','pierce'][Math.floor(Math.random()*3)] });
 
@@ -246,7 +238,7 @@
             sumoTime++; let aliveCount = 0; let lastAlive = null;
 
             if(sumoTime === 1800 || (sumoTime > 1800 && sumoTime % 1800 === 0)) powerups.push({ x: 512 + (Math.random()*100-50), y: 384 + (Math.random()*100-50), r: 18, type: 'super' });
-            if(sumoTime > 10800) ARENA.r = Math.max(160, ARENA.r - 0.05); // Rimpicciolisci mappa dopo 3 min
+            if(sumoTime > 10800) ARENA.r = Math.max(160, ARENA.r - 0.05);
 
             players.forEach((p, i) => {
                 if(p.isDead) return;
@@ -261,7 +253,6 @@
 
                 p.vx *= 0.92; p.vy *= 0.92; p.x += p.vx; p.y += p.vy;
 
-                // Eliminazione se fuori al 70% (distanza > raggio arena - 30% del raggio del corpo)
                 if (Math.hypot(p.x - ARENA.x, p.y - ARENA.y) > ARENA.r + 10) p.isDead = true; 
 
                 powerups.forEach((pu, idx) => { if(Math.hypot(p.x-pu.x, p.y-pu.y) < 40) { p.superPush = true; powerups.splice(idx,1); }});
@@ -279,7 +270,6 @@
                         let dv = (p1.vx*nx + p1.vy*ny) - (p2.vx*nx + p2.vy*ny);
                         let forceP1 = 1.2; let forceP2 = 1.2;
                         
-                        // Meccanica Spinta / Super Spinta
                         if(p1.isPushing && !p2.isPushing) forceP2 = 2.0;
                         if(p2.isPushing && !p1.isPushing) forceP1 = 2.0;
                         if(p1.superPush && p1.isPushing) { forceP2 = 6.0; p1.superPush = false; }
@@ -292,7 +282,6 @@
 
             if(aliveCount <= 1) {
                 if(lastAlive) { lastAlive.score++; updateScoreUI(); if(lastAlive.score >= MAX_SCORE) { endGame(lastAlive.id); return; } }
-                // Round Reset (I cadaveri spariscono)
                 sumoTime = 0; ARENA.r = 320; powerups = [];
                 for(let i=0; i<numPlayers; i++) { let a = (Math.PI*2/numPlayers) * i; players[i].x = ARENA.x + Math.cos(a)*150; players[i].y = ARENA.y + Math.sin(a)*150; players[i].angle = a+Math.PI; players[i].vx=0; players[i].vy=0; players[i].isDead=false; players[i].superPush=false; }
             }
@@ -311,22 +300,16 @@
                 
                 if (p.isDead) {
                     ctx.globalAlpha = 0.5;
-                    ctx.fillStyle = '#bdc3c7'; ctx.beginPath(); ctx.arc(0,0,26,0,Math.PI*2); ctx.fill(); // Corpo morto
-                    ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.fillRect(-15, -4, 30, 8); // Mawashi morto
-                    ctx.fillStyle = '#2c3e50'; ctx.font = "bold 20px Arial"; ctx.fillText("X X", -16, 6); // Facci morta
+                    ctx.fillStyle = '#bdc3c7'; ctx.beginPath(); ctx.arc(0,0,26,0,Math.PI*2); ctx.fill(); 
+                    ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.fillRect(-15, -4, 30, 8); 
+                    ctx.fillStyle = '#2c3e50'; ctx.font = "bold 20px Arial"; ctx.fillText("X X", -16, 6);
                 } else {
                     if (p.superPush) { ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 15; }
-                    
-                    // Braccia
                     ctx.fillStyle = '#ffeaa7'; 
                     if (p.isPushing) { ctx.beginPath(); ctx.roundRect(15, -25, 25, 12, 6); ctx.roundRect(15, 13, 25, 12, 6); ctx.fill(); } 
                     else { ctx.beginPath(); ctx.roundRect(5, -25, 15, 12, 6); ctx.roundRect(5, 13, 15, 12, 6); ctx.fill(); }
-
-                    // Corpo Sumo
                     ctx.beginPath(); ctx.arc(0,0,28,0,Math.PI*2); ctx.fillStyle='#ffeaa7'; ctx.fill(); ctx.strokeStyle=p.color; ctx.lineWidth=4; ctx.stroke();
-                    // Mawashi (Cintura)
                     ctx.fillStyle='#2d3436'; ctx.beginPath(); ctx.fillRect(-10, -28, 20, 56);
-                    // Testa e capelli
                     ctx.fillStyle='#ffeaa7'; ctx.beginPath(); ctx.arc(10,0,14,0,Math.PI*2); ctx.fill();
                     ctx.fillStyle='#2d3436'; ctx.beginPath(); ctx.arc(8,0,10,Math.PI/2, -Math.PI/2, true); ctx.fill();
                 }
@@ -335,93 +318,151 @@
         }
 
         // ==========================================
-        //             3. SHAPES GAME
+        //             3. SHAPES GAME (Riscritto)
         // ==========================================
-        let s_grid = [], s_colors = [], s_maxColorId = -1, s_state = 'WAIT', s_timer = 0;
+        let s_grid = [], s_maxColorId = -1, s_state = 'WAIT', s_timer = 0;
         let s_locked = [];
 
-        function initShapes() { players = []; for(let i=0; i<numPlayers; i++) players.push({ id: i, score: 0, cursor: 0, lockTimer: 0, locked: false }); s_locked = []; generateShapesGrid(); }
+        function initShapes() { players = []; for(let i=0; i<numPlayers; i++) players.push({ id: i, score: 0, locked: false, choice: -1, lockTime: 0 }); generateShapesGrid(); }
 
         function generateShapesGrid() {
-            // Algoritmo di Flood Fill per Aree Contigue (Differenza 1-2 quadretti)
             s_grid = Array(10).fill().map(() => Array(10).fill(-1));
-            let targets = [27, 25, 24, 24].sort(() => Math.random() - 0.5);
-            s_maxColorId = targets.indexOf(Math.max(...targets));
+            let seeds = [];
             
-            let sizes = [0,0,0,0]; let fronts = [ [[0,0]], [[0,9]], [[9,0]], [[9,9]] ];
-            s_grid[0][0]=0; s_grid[0][9]=1; s_grid[9][0]=2; s_grid[9][9]=3; sizes=[1,1,1,1];
-            let empty = 96; let colorTurn = 0;
-
-            while(empty > 0) {
-                let c = colorTurn % 4;
-                if (sizes[c] < targets[c]) {
-                    let validFronts = [];
-                    for(let f of fronts[c]) {
-                        let r=f[0], col=f[1];
-                        if(r>0 && s_grid[r-1][col]===-1) validFronts.push([r-1,col]); if(r<9 && s_grid[r+1][col]===-1) validFronts.push([r+1,col]);
-                        if(col>0 && s_grid[r][col-1]===-1) validFronts.push([r,col-1]); if(col<9 && s_grid[r][col+1]===-1) validFronts.push([r,col+1]);
-                    }
-                    if(validFronts.length > 0) { let pick = validFronts[Math.floor(Math.random()*validFronts.length)]; if(s_grid[pick[0]][pick[1]] === -1) { s_grid[pick[0]][pick[1]] = c; fronts[c].push(pick); sizes[c]++; empty--; } }
-                }
-                colorTurn++;
+            // Genera 4 semi distanti per le 4 aree tramite Voronoi modificato
+            while(seeds.length < 4) {
+                let r = Math.floor(Math.random()*10); let c = Math.floor(Math.random()*10);
+                if (!seeds.some(s => s.r===r && s.c===c)) seeds.push({r:r, c:c, id:seeds.length, weight: Math.random()*2});
             }
-            // Riempi eventuali buchi
-            for(let r=0; r<10; r++) for(let c=0; c<10; c++) if(s_grid[r][c]===-1) { let n = (r>0&&s_grid[r-1][c]!==-1)?s_grid[r-1][c] : (r<9&&s_grid[r+1][c]!==-1)?s_grid[r+1][c] : 0; s_grid[r][c]=n; sizes[n]++; }
             
-            players.forEach(p => { p.cursor = p.id; p.lockTimer = 0; p.locked = false; }); s_locked = []; s_state = 'PLAY'; s_timer = 0;
+            let counts = [0,0,0,0];
+            for(let r=0; r<10; r++) {
+                for(let c=0; c<10; c++) {
+                    let bestDist = Infinity; let bestId = 0;
+                    for(let s of seeds) {
+                        let dist = Math.abs(r - s.r) + Math.abs(c - s.c) - s.weight + Math.random()*1.5;
+                        if(dist < bestDist) { bestDist = dist; bestId = s.id; }
+                    }
+                    s_grid[r][c] = bestId; counts[bestId]++;
+                }
+            }
+            
+            // Gestione dei rari pareggi di area
+            let maxVal = Math.max(...counts); let maxIds = [];
+            counts.forEach((val, idx) => { if(val === maxVal) maxIds.push(idx); });
+            if(maxIds.length > 1) return generateShapesGrid(); // Rigenera se l'area maggiore è identica per due colori
+            
+            s_maxColorId = maxIds[0];
+            
+            players.forEach(p => { p.locked = false; p.choice = -1; p.lockTime = 0; });
+            s_locked = []; s_state = 'PLAY'; s_timer = 0;
         }
 
         function updateShapes() {
             if(s_state === 'WAIT') { s_timer++; if(s_timer > 90) generateShapesGrid(); return; }
+            if(s_state === 'REVEAL') {
+                s_timer++;
+                if(s_timer > 150) {
+                    let winner = players.find(p => p.score >= MAX_SCORE && p.id < numPlayers);
+                    if(winner) { endGame(winner.id); return; }
+                    s_state = 'WAIT'; s_timer = 0;
+                }
+                return;
+            }
+            
+            s_timer++; 
+            let hoverColorId = Math.floor(s_timer / 45) % 4; // Scorre colore ogni 0.75 sec
             
             let allLocked = true;
-            players.forEach((p, i) => {
-                if(p.locked) return; allLocked = false;
-                let btn = buttons[i];
-                if (btn.justPressed) { p.cursor = (p.cursor + 1) % 4; p.lockTimer = 0; } // Cicla colore
-                else { p.lockTimer++; if(p.lockTimer > 70) { p.locked = true; s_locked.push(p); } } // Lock dopo 1.1s
-            });
-
-            if(allLocked) {
-                // Assegna punteggi a scalare per chi ha indovinato il colore max (3, 2, 1)
-                let pts = 3;
-                s_locked.forEach(p => { if(p.cursor === s_maxColorId) { p.score += pts; pts = Math.max(1, pts-1); } else { p.score = Math.max(0, p.score - 1); } });
-                updateScoreUI();
+            for(let i=0; i<numPlayers; i++) {
+                let p = players[i]; if(p.locked) continue;
+                allLocked = false;
                 
-                let winner = players.find(p => p.score >= MAX_SCORE);
-                if(winner) { endGame(winner.id); return; }
-                s_state = 'WAIT'; s_timer = 0;
+                if (buttons[i].justPressed) {
+                    p.locked = true; p.choice = hoverColorId; p.lockTime = s_timer;
+                    s_locked.push(p);
+                }
+            }
+
+            // Se tutti hanno cliccato, o se sono passati 12 secondi
+            if(allLocked || s_timer > 720) { 
+                let correctPlayers = s_locked.filter(p => p.choice === s_maxColorId).sort((a,b) => a.lockTime - b.lockTime);
+                let pts = 3; let lastTime = -1;
+                
+                // Sistema a scalare per chi ha indovinato (stesso punteggio in caso di tempo identico)
+                for(let i=0; i<correctPlayers.length; i++) {
+                    if(correctPlayers[i].lockTime !== lastTime && i > 0) pts = Math.max(1, pts-1);
+                    correctPlayers[i].score += pts;
+                    lastTime = correctPlayers[i].lockTime;
+                }
+                
+                s_locked.forEach(p => { if(p.choice !== s_maxColorId) p.score = Math.max(0, p.score - 1); });
+                
+                updateScoreUI(); s_state = 'REVEAL'; s_timer = 0;
             }
         }
 
         function drawShapes() {
             ctx.fillStyle = '#ecf0f1'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            let bSize = 60; let ox = (canvas.width - (10*bSize))/2; let oy = (canvas.height - (10*bSize))/2;
+            let bSize = 56; let ox = (canvas.width - (10*bSize))/2; let oy = (canvas.height - (10*bSize))/2;
             
             ctx.fillStyle = '#bdc3c7'; ctx.fillRect(ox-10, oy-10, 10*bSize+20, 10*bSize+20);
             
-            if (s_state === 'PLAY') {
-                // Disegna le aree piene accorpando i bordi
-                for(let r=0; r<10; r++) { for(let c=0; c<10; c++) {
-                    ctx.fillStyle = P_COLORS[s_grid[r][c]]; ctx.fillRect(ox + c*bSize, oy + r*bSize, bSize+1, bSize+1);
-                    ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1;
-                    if(r>0 && s_grid[r][c] !== s_grid[r-1][c]) { ctx.beginPath(); ctx.moveTo(ox+c*bSize, oy+r*bSize); ctx.lineTo(ox+(c+1)*bSize, oy+r*bSize); ctx.stroke(); }
-                    if(c>0 && s_grid[r][c] !== s_grid[r][c-1]) { ctx.beginPath(); ctx.moveTo(ox+c*bSize, oy+r*bSize); ctx.lineTo(ox+c*bSize, oy+(r+1)*bSize); ctx.stroke(); }
-                }}
+            if (s_state === 'PLAY' || s_state === 'REVEAL') {
+                // Riempi i quadrati
+                for(let r=0; r<10; r++) { 
+                    for(let c=0; c<10; c++) {
+                        ctx.fillStyle = P_COLORS[s_grid[r][c]]; 
+                        ctx.fillRect(ox + c*bSize, oy + r*bSize, bSize, bSize);
+                    }
+                }
+                
+                // Disegna solo i bordi di transizione per farle sembrare forme intere uniche
+                ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 4;
+                for(let r=0; r<10; r++) { 
+                    for(let c=0; c<10; c++) {
+                        let color = s_grid[r][c];
+                        if(c<9 && s_grid[r][c+1] !== color) { ctx.beginPath(); ctx.moveTo(ox+(c+1)*bSize, oy+r*bSize); ctx.lineTo(ox+(c+1)*bSize, oy+(r+1)*bSize); ctx.stroke(); }
+                        if(r<9 && s_grid[r+1][c] !== color) { ctx.beginPath(); ctx.moveTo(ox+c*bSize, oy+(r+1)*bSize); ctx.lineTo(ox+(c+1)*bSize, oy+(r+1)*bSize); ctx.stroke(); }
+                    }
+                }
 
-                // Disegna Cursori Giocatori sui Colori Esterni
-                let cPos = [ {x:ox-60, y:oy+300}, {x:ox+660, y:oy+300}, {x:ox+300, y:oy-60}, {x:ox+300, y:oy+660} ];
-                cPos.forEach((pos, idx) => { ctx.fillStyle=P_COLORS[idx]; ctx.fillRect(pos.x-30, pos.y-30, 60, 60); ctx.strokeStyle='#000'; ctx.strokeRect(pos.x-30, pos.y-30, 60, 60); });
+                // UI Centrale Scelta
+                let hoverColorId = Math.floor(s_timer / 45) % 4;
+                if(s_state === 'PLAY') {
+                    ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.roundRect(canvas.width/2 - 150, 20, 300, 80, 40); ctx.fill();
+                    ctx.fillStyle = '#fff'; ctx.font = "bold 24px Arial"; ctx.textAlign="center"; ctx.fillText("SELEZIONA:", canvas.width/2 - 30, 68);
+                    
+                    ctx.fillStyle = P_COLORS[hoverColorId]; ctx.beginPath(); ctx.arc(canvas.width/2 + 80, 60, 25, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+                } else if(s_state === 'REVEAL') {
+                    ctx.fillStyle = '#34495e'; ctx.beginPath(); ctx.roundRect(canvas.width/2 - 200, 20, 400, 80, 40); ctx.fill();
+                    ctx.fillStyle = '#fff'; ctx.font = "bold 24px Arial"; ctx.textAlign="center"; ctx.fillText("AREA MAGGIORE:", canvas.width/2 - 40, 68);
+                    
+                    ctx.fillStyle = P_COLORS[s_maxColorId]; ctx.beginPath(); ctx.arc(canvas.width/2 + 110, 60, 25, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 6; ctx.stroke();
+                }
 
-                players.forEach(p => {
-                    let target = cPos[p.cursor];
-                    ctx.beginPath(); ctx.arc(target.x + (p.id*10 - 15), target.y + (p.id*10 - 15), 18, 0, Math.PI*2); ctx.fillStyle = p.color; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
-                    if(!p.locked) { ctx.beginPath(); ctx.arc(target.x + (p.id*10 - 15), target.y + (p.id*10 - 15), 24, -Math.PI/2, -Math.PI/2 + (p.lockTimer/70)*Math.PI*2); ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 4; ctx.stroke(); } 
-                    else { ctx.fillStyle='#fff'; ctx.font="14px Arial"; ctx.fillText("OK", target.x+(p.id*10-25), target.y+(p.id*10-10)); }
-                });
-            } else {
-                ctx.fillStyle = '#2c3e50'; ctx.font = "bold 50px Arial"; ctx.textAlign = "center"; ctx.fillText("SVELAMENTO...", canvas.width/2, canvas.height/2); ctx.textAlign = "left";
+                // Mostra la scelta presa dai giocatori negli angoli interni
+                for(let i=0; i<numPlayers; i++) {
+                    let p = players[i];
+                    let bx = buttons[i].cx === 0 ? 150 : 874;
+                    let by = buttons[i].cy === 0 ? 150 : 618;
+                    
+                    if(p.locked) {
+                        ctx.fillStyle = P_COLORS[p.choice]; ctx.beginPath(); ctx.arc(bx, by, 35, 0, Math.PI*2); ctx.fill();
+                        ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.stroke();
+                        
+                        if(s_state === 'REVEAL') {
+                            ctx.fillStyle = (p.choice === s_maxColorId) ? '#2ecc71' : '#e74c3c'; ctx.font = "bold 40px Arial"; ctx.textAlign="center";
+                            ctx.fillText((p.choice === s_maxColorId) ? "✔" : "✘", bx, by+15);
+                        }
+                    }
+                }
+            } else if (s_state === 'WAIT') {
+                ctx.fillStyle = '#2c3e50'; ctx.font = "bold 50px Arial"; ctx.textAlign = "center"; ctx.fillText("PREPARATI...", canvas.width/2, canvas.height/2);
             }
+            ctx.textAlign = "left";
         }
 
         // ==========================================
