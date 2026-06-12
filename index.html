@@ -3,11 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>234 Player Hub - 4P One Button</title>
+    <title>234 Player Hub - Ultimate One Button</title>
     <style>
-        body { margin: 0; padding: 0; background-color: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
-        #game-container { position: relative; width: 100vw; height: 100vh; max-width: 1024px; max-height: 768px; box-shadow: 0 0 50px rgba(0,0,0,0.8); background-color: #2c3e50; overflow: hidden; }
-        canvas { width: 100%; height: 100%; display: block; border-radius: 10px; }
+        body { margin: 0; padding: 0; background-color: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; font-family: 'Segoe UI', Tahoma, sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
+        
+        /* Sistema Anti-Deformazione per iPhone/iPad */
+        #game-wrapper { display: flex; justify-content: center; align-items: center; width: 100%; height: 100%; }
+        #game-container { position: relative; background-color: #2c3e50; box-shadow: 0 0 50px rgba(0,0,0,0.8); overflow: hidden; }
+        
+        /* Mantiene esattamente le proporzioni 4:3 su qualsiasi schermo */
+        @media (min-aspect-ratio: 1024/768) { #game-container { height: 100vh; width: calc(100vh * (1024/768)); } }
+        @media (max-aspect-ratio: 1024/768) { #game-container { width: 100vw; height: calc(100vw * (768/1024)); } }
+        
+        canvas { width: 100%; height: 100%; display: block; }
+        
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; }
         .score-board { display: flex; justify-content: center; gap: 40px; padding: 15px; font-size: 38px; font-weight: 900; text-shadow: 3px 3px 6px rgba(0,0,0,0.7); }
         .s-p1 { color: #ff4757; } .s-p2 { color: #1e90ff; } .s-p3 { color: #2ed573; } .s-p4 { color: #f1c40f; }
@@ -32,156 +41,134 @@
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="gameCanvas" width="1024" height="768"></canvas>
-        <div id="ui-layer" class="hidden">
-            <div class="score-board">
-                <span class="s-p1" id="ui-s0">P1: 0</span>
-                <span class="s-p2" id="ui-s1">P2: 0</span>
-                <span class="s-p3 hidden" id="ui-s2">P3: 0</span>
-                <span class="s-p4 hidden" id="ui-s3">P4: 0</span>
+    <div id="game-wrapper">
+        <div id="game-container">
+            <canvas id="gameCanvas" width="1024" height="768"></canvas>
+            <div id="ui-layer" class="hidden">
+                <div class="score-board">
+                    <span class="s-p1" id="ui-s0">P1: 0</span>
+                    <span class="s-p2" id="ui-s1">P2: 0</span>
+                    <span class="s-p3 hidden" id="ui-s2">P3: 0</span>
+                    <span class="s-p4 hidden" id="ui-s3">P4: 0</span>
+                </div>
             </div>
-        </div>
-        
-        <div id="menu-screen" class="overlay-screen">
-            <h1>Mini Games Hub</h1>
             
-            <div class="controls-panel">
-                <span>Giocatori:</span>
-                <button class="control-btn" id="btn-2p" onclick="setPlayers(2)">2P</button>
-                <button class="control-btn" id="btn-3p" onclick="setPlayers(3)">3P</button>
-                <button class="control-btn active" id="btn-4p" onclick="setPlayers(4)">4P</button>
+            <div id="menu-screen" class="overlay-screen">
+                <h1>Mini Games Hub</h1>
+                
+                <div class="controls-panel">
+                    <span>Giocatori:</span>
+                    <button class="control-btn" id="btn-2p" onclick="setPlayers(2)" ontouchstart="setPlayers(2); event.preventDefault();">2P</button>
+                    <button class="control-btn" id="btn-3p" onclick="setPlayers(3)" ontouchstart="setPlayers(3); event.preventDefault();">3P</button>
+                    <button class="control-btn active" id="btn-4p" onclick="setPlayers(4)" ontouchstart="setPlayers(4); event.preventDefault();">4P</button>
+                </div>
+
+                <div class="menu-row">
+                    <div class="game-card" style="border-color: #2ed573;" onclick="startGame(STATE.TANKS)" ontouchstart="startGame(STATE.TANKS); event.preventDefault();">
+                        <h3 style="color: #2ed573;">Tanks</h3><p>Rotazione & Sparo</p>
+                    </div>
+                    <div class="game-card" style="border-color: #f39c12;" onclick="startGame(STATE.SUMO)" ontouchstart="startGame(STATE.SUMO); event.preventDefault();">
+                        <h3 style="color: #f39c12;">Sumo</h3><p>Spingi e Rimpicciolisci</p>
+                    </div>
+                    <div class="game-card" style="border-color: #9b59b6;" onclick="startGame(STATE.SHAPES)" ontouchstart="startGame(STATE.SHAPES); event.preventDefault();">
+                        <h3 style="color: #9b59b6;">Area Max</h3><p>Trova la forma più grande</p>
+                    </div>
+                </div>
+
+                <div class="tournament-box">
+                    <div class="coming-soon-badge">COMING SOON</div>
+                    <h3 style="margin:0; color:#f1c40f;">MODALITÀ TORNEO</h3>
+                    <p style="margin:5px 0 0 0; font-size:14px;">Sfida a punti con classifica finale e rotazione giochi!</p>
+                    <div class="tourney-settings">
+                        <button class="t-btn">Round: 3/5/7/9</button>
+                        <button class="t-btn">Giochi: Random</button>
+                        <button class="t-btn">Avvia Torneo</button>
+                    </div>
+                </div>
             </div>
 
-            <div class="menu-row">
-                <div class="game-card" style="border-color: #2ed573;" onclick="startGame(STATE.TANKS)">
-                    <h3 style="color: #2ed573;">Tanks</h3><p>Spara e Muoviti</p>
-                </div>
-                <div class="game-card" style="border-color: #f39c12;" onclick="startGame(STATE.SUMO)">
-                    <h3 style="color: #f39c12;">Sumo</h3><p>Spingi fuori!</p>
-                </div>
-                <div class="game-card" style="border-color: #9b59b6;" onclick="startGame(STATE.SHAPES)">
-                    <h3 style="color: #9b59b6;">Area Max</h3><p>Trova il più grande</p>
-                </div>
+            <div id="gameover-screen" class="overlay-screen hidden">
+                <h1 id="winner-text">VINCE!</h1>
+                <button class="control-btn" style="background:#3498db; font-size:24px; padding:15px 40px;" onclick="backToMenu()" ontouchstart="backToMenu(); event.preventDefault();">Torna al Menu</button>
             </div>
-
-            <div class="tournament-box">
-                <div class="coming-soon-badge">COMING SOON</div>
-                <h3 style="margin:0; color:#f1c40f;">MODALITÀ TORNEO</h3>
-                <p style="margin:5px 0 0 0; font-size:14px;">Sfida a punti con classifica finale e rotazione giochi!</p>
-                <div class="tourney-settings">
-                    <button class="t-btn">Round: 3/5/7/9</button>
-                    <button class="t-btn">Giochi: Random</button>
-                    <button class="t-btn">Avvia Torneo</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="gameover-screen" class="overlay-screen hidden">
-            <h1 id="winner-text">VINCE!</h1>
-            <button class="control-btn" style="background:#3498db; font-size:24px; padding:15px 40px;" onclick="backToMenu()">Torna al Menu</button>
         </div>
     </div>
 
     <script>
         const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
         const STATE = { MENU: 0, TANKS: 1, SUMO: 2, SHAPES: 3, GAMEOVER: 4 };
-        let currentState = STATE.MENU;
-        let numPlayers = 4;
-        const MAX_SCORE = 3; 
+        let currentState = STATE.MENU; let numPlayers = 4; const MAX_SCORE = 3; 
 
-        // Colori Ufficiali Giocatori: P1(Rosso), P2(Blu), P3(Verde), P4(Giallo)
+        // Colori: P1(Rosso), P2(Blu), P3(Verde), P4(Giallo)
         const P_COLORS = ['#ff4757', '#1e90ff', '#2ed573', '#f1c40f'];
         let players = [];
 
-        // ==========================================
-        //         SISTEMA INPUT "ONE BUTTON"
-        // ==========================================
+        // Bottoni agli estremi angoli per effetto "mangiato"
         const buttons = [
-            { cx: 100, cy: 668, r: 80, color: P_COLORS[0], pressed: false, justPressed: false, justReleased: false, active: true }, // Bottom-Left (P1)
-            { cx: 924, cy: 100, r: 80, color: P_COLORS[1], pressed: false, justPressed: false, justReleased: false, active: true }, // Top-Right (P2)
-            { cx: 100, cy: 100, r: 80, color: P_COLORS[2], pressed: false, justPressed: false, justReleased: false, active: false }, // Top-Left (P3)
-            { cx: 924, cy: 668, r: 80, color: P_COLORS[3], pressed: false, justPressed: false, justReleased: false, active: false }  // Bottom-Right (P4)
+            { cx: 0, cy: 768, r: 180, color: P_COLORS[0], pressed: false, justPressed: false, justReleased: false, active: true },   // P1 Basso-Sinistra
+            { cx: 1024, cy: 0, r: 180, color: P_COLORS[1], pressed: false, justPressed: false, justReleased: false, active: true }, // P2 Alto-Destra
+            { cx: 0, cy: 0, r: 180, color: P_COLORS[2], pressed: false, justPressed: false, justReleased: false, active: false },    // P3 Alto-Sinistra
+            { cx: 1024, cy: 768, r: 180, color: P_COLORS[3], pressed: false, justPressed: false, justReleased: false, active: false }// P4 Basso-Destra
         ];
 
-        // Simula i tasti su PC per test (Q=P1, M=P2, Z=P3, P=P4)
         const keyMap = {'KeyZ': 0, 'KeyM': 1, 'KeyQ': 2, 'KeyP': 3};
         window.addEventListener('keydown', e => { if(keyMap[e.code] !== undefined && buttons[keyMap[e.code]].active) { let b = buttons[keyMap[e.code]]; if(!b.pressed){ b.pressed = true; b.justPressed = true; }}});
         window.addEventListener('keyup', e => { if(keyMap[e.code] !== undefined && buttons[keyMap[e.code]].active) { let b = buttons[keyMap[e.code]]; b.pressed = false; b.justReleased = true; }});
 
-        function getTouchPos(e, touch) { const rect = canvas.getBoundingClientRect(); return { x: (touch.clientX - rect.left) * (canvas.width / rect.width), y: (touch.clientY - rect.top) * (canvas.height / rect.height) }; }
+        function getTouchPos(e, touch) { const rect = canvas.getBoundingClientRect(); return { x: (touch.clientX - rect.left) * (1024 / rect.width), y: (touch.clientY - rect.top) * (768 / rect.height) }; }
 
-        canvas.addEventListener('touchstart', e => { if (currentState===STATE.MENU || currentState===STATE.GAMEOVER) return; e.preventDefault(); for (let t of e.changedTouches) { let pos = getTouchPos(e, t); buttons.forEach((b, i) => { if (b.active && Math.hypot(pos.x - b.cx, pos.y - b.cy) < b.r * 1.5) { b.pressed = true; b.justPressed = true; b.touchId = t.identifier; } }); } }, {passive: false});
+        canvas.addEventListener('touchstart', e => { if (currentState===STATE.MENU || currentState===STATE.GAMEOVER) return; e.preventDefault(); for (let t of e.changedTouches) { let pos = getTouchPos(e, t); buttons.forEach((b, i) => { if (b.active && Math.hypot(pos.x - b.cx, pos.y - b.cy) < b.r) { b.pressed = true; b.justPressed = true; b.touchId = t.identifier; } }); } }, {passive: false});
         canvas.addEventListener('touchend', e => { for (let t of e.changedTouches) { buttons.forEach(b => { if (b.touchId === t.identifier) { b.pressed = false; b.justReleased = true; b.touchId = null; } }); } });
         canvas.addEventListener('touchcancel', e => { for (let t of e.changedTouches) { buttons.forEach(b => { if (b.touchId === t.identifier) { b.pressed = false; b.justReleased = true; b.touchId = null; } }); } });
 
         function resetInputFrame() { buttons.forEach(b => { b.justPressed = false; b.justReleased = false; }); }
 
         function setPlayers(n) {
-            numPlayers = n;
-            document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-'+n+'p').classList.add('active');
+            numPlayers = n; document.querySelectorAll('.control-btn').forEach(b => b.classList.remove('active')); document.getElementById('btn-'+n+'p').classList.add('active');
             buttons[2].active = (n >= 3); buttons[3].active = (n === 4);
         }
 
-        function updateScoreUI() {
-            for(let i=0; i<4; i++) {
-                let el = document.getElementById('ui-s'+i);
-                if(i < numPlayers) { el.classList.remove('hidden'); el.innerText = `P${i+1}: ${players[i].score}`; } 
-                else { el.classList.add('hidden'); }
-            }
-        }
+        function updateScoreUI() { for(let i=0; i<4; i++) { let el = document.getElementById('ui-s'+i); if(i < numPlayers) { el.classList.remove('hidden'); el.innerText = `P${i+1}: ${players[i].score}`; } else { el.classList.add('hidden'); } } }
 
-        function endGame(pIndex) { 
-            currentState = STATE.GAMEOVER; 
-            document.getElementById('ui-layer').classList.add('hidden'); 
-            document.getElementById('gameover-screen').classList.remove('hidden'); 
-            document.getElementById('winner-text').innerText = `P${pIndex+1} VINCE!`; 
-            document.getElementById('winner-text').style.color = P_COLORS[pIndex]; 
-        }
+        function endGame(pIndex) { currentState = STATE.GAMEOVER; document.getElementById('ui-layer').classList.add('hidden'); document.getElementById('gameover-screen').classList.remove('hidden'); document.getElementById('winner-text').innerText = `P${pIndex+1} VINCE!`; document.getElementById('winner-text').style.color = P_COLORS[pIndex]; }
+        function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) { let tX = cx; let tY = cy; if (cx < rx) tX = rx; else if (cx > rx + rw) tX = rx + rw; if (cy < ry) tY = ry; else if (cy > ry + rh) tY = ry + rh; return ((cx - tX)*(cx - tX) + (cy - tY)*(cy - tY)) <= (cr*cr); }
 
         // ==========================================
         //             1. TANKS GAME
         // ==========================================
-        let bullets = [], powerups = [], obstacles = [], powerupTimer = 0;
+        let bullets = [], powerups = [], obstacles = [], tankTime = 0;
         
         function initTanks() {
             let spawns = [ {x:150, y:618, a:-Math.PI/4}, {x:874, y:150, a:Math.PI-Math.PI/4}, {x:150, y:150, a:Math.PI/4}, {x:874, y:618, a:Math.PI+Math.PI/4} ];
-            players = [];
-            for(let i=0; i<numPlayers; i++) {
-                players.push({ id: i, x: spawns[i].x, y: spawns[i].y, angle: spawns[i].a, rotDir: 1, color: P_COLORS[i], score: 0, isDead: false, respawnTimer: 0, ammo: 5, reloadTimer: 0, cooldown: 0, trails: [], abilities: { bounce: 0, destroy_walls: 0, pierce: 0, ghost: 0 } });
-            }
-            bullets = []; powerups = []; obstacles = [ {x: 412, y: 150, w: 200, h: 40, type: 'wall'}, {x: 412, y: 578, w: 200, h: 40, type: 'wall'}, {x: 300, y: 300, w: 40, h: 168, type: 'wall'}, {x: 684, y: 300, w: 40, h: 168, type: 'wall'} ];
+            players = []; tankTime = 0;
+            for(let i=0; i<numPlayers; i++) players.push({ id: i, x: spawns[i].x, y: spawns[i].y, angle: spawns[i].a, rotDir: 1, color: P_COLORS[i], score: 0, isDead: false, respawnTimer: 0, ammo: 5, reloadTimer: 0, cooldown: 0, trails: [], abilities: { bounce: 0, destroy_walls: 0, pierce: 0 } });
+            bullets = []; powerups = []; obstacles = [ {x: 412, y: 150, w: 200, h: 40, type: 'wall'}, {x: 412, y: 578, w: 200, h: 40, type: 'wall'}, {x: 300, y: 300, w: 40, h: 168, type: 'wall'}, {x: 684, y: 300, w: 40, h: 168, type: 'wall'}, {x: 200, y: 150, r: 25, type: 'tree'}, {x: 824, y: 618, r: 25, type: 'tree'}, {x: 824, y: 150, r: 25, type: 'tree'}, {x: 200, y: 618, r: 25, type: 'tree'} ];
         }
 
         function updateTanks() {
-            powerupTimer--;
-            if(powerupTimer <= 0) { powerups.push({ x: Math.random()*600+200, y: Math.random()*400+180, r: 16, type: ['bounce','destroy_walls','ghost','pierce'][Math.floor(Math.random()*4)] }); powerupTimer = 400; }
+            tankTime++;
+            // Primo powerup a 10s (600 frame) al centro. Poi ogni 30s (1800 frame) casuale.
+            if(tankTime === 600) powerups.push({ x: 512, y: 384, r: 16, type: ['bounce','destroy_walls','pierce'][Math.floor(Math.random()*3)] });
+            else if(tankTime > 600 && (tankTime - 600) % 1800 === 0) powerups.push({ x: Math.random()*600+200, y: Math.random()*400+180, r: 16, type: ['bounce','destroy_walls','pierce'][Math.floor(Math.random()*3)] });
 
             players.forEach((p, i) => {
-                if (p.isDead) { p.respawnTimer--; if(p.respawnTimer <= 0) { p.isDead = false; p.ammo = 5; p.abilities = { bounce: 0, destroy_walls: 0, pierce: 0, ghost: 0 }; } return; }
+                if (p.isDead) { p.respawnTimer--; if(p.respawnTimer <= 0) { p.isDead = false; p.ammo = 5; p.abilities = { bounce: 0, destroy_walls: 0, pierce: 0 }; } return; }
                 
                 let btn = buttons[i];
                 if(p.cooldown > 0) p.cooldown--;
                 if(p.ammo < 5) { p.reloadTimer++; if(p.reloadTimer>120){ p.ammo++; p.reloadTimer=0;} }
                 for(let a in p.abilities) { if(a !== 'pierce' && p.abilities[a]>0) p.abilities[a]--; }
 
-                // ONE BUTTON LOGIC: TANKS
-                if (btn.justReleased) p.rotDir *= -1; // Inverti rotazione al rilascio
+                if (btn.justReleased) p.rotDir *= -1; 
                 
                 let oldX = p.x; let oldY = p.y;
-                if (!btn.pressed) {
-                    p.angle += 0.045 * p.rotDir; // Ruota automaticamente
-                } else {
-                    p.x += Math.cos(p.angle) * 4; // Avanza
-                    p.y += Math.sin(p.angle) * 4;
+                if (!btn.pressed) p.angle += 0.045 * p.rotDir; 
+                else {
+                    p.x += Math.cos(p.angle) * 3.5; p.y += Math.sin(p.angle) * 3.5;
                     if(Math.random()<0.3) p.trails.push({x: p.x, y: p.y, a: p.angle, alpha: 0.6});
-                    
-                    // Sparo sul "Tap" iniziale
                     if (btn.justPressed && p.cooldown <= 0 && p.ammo > 0) {
                         bullets.push({ x: p.x + Math.cos(p.angle)*35, y: p.y + Math.sin(p.angle)*35, vx: Math.cos(p.angle)*12, vy: Math.sin(p.angle)*12, owner: p, r: 6, dead: false, wallDestroyer: p.abilities.destroy_walls>0, bounces: p.abilities.bounce>0?2:0, pierce: p.abilities.pierce>0 });
-                        p.cooldown = 25; p.ammo--;
-                        if(p.abilities.pierce > 0) { p.abilities.pierce--; if(p.abilities.pierce===0) p.ammo=5; }
+                        p.cooldown = 25; p.ammo--; if(p.abilities.pierce > 0) { p.abilities.pierce--; if(p.abilities.pierce===0) p.ammo=5; }
                     }
                 }
                 
@@ -189,9 +176,8 @@
                 if (p.x < 30) p.x = 30; if (p.x > canvas.width-30) p.x = canvas.width-30; if (p.y < 30) p.y = 30; if (p.y > canvas.height-30) p.y = canvas.height-30;
 
                 obstacles.forEach(obs => {
-                    let cx = p.x < obs.x ? obs.x : p.x > obs.x+obs.w ? obs.x+obs.w : p.x;
-                    let cy = p.y < obs.y ? obs.y : p.y > obs.y+obs.h ? obs.y+obs.h : p.y;
-                    if (Math.hypot(p.x-cx, p.y-cy) <= 24) { if(p.abilities.ghost <= 0) { p.x = oldX; p.y = oldY; } }
+                    let hit = (obs.type === 'tree') ? (Math.hypot(p.x - obs.x, p.y - obs.y) < 24 + obs.r) : circleRectCollide(p.x, p.y, 24, obs.x, obs.y, obs.w, obs.h);
+                    if (hit) { p.x = oldX; p.y = oldY; }
                 });
 
                 powerups.forEach((pu, idx) => { if(Math.hypot(p.x-pu.x, p.y-pu.y) < 40) { if(pu.type==='pierce') p.abilities[pu.type]=3; else p.abilities[pu.type]=300; p.ammo=5; powerups.splice(idx,1); }});
@@ -203,9 +189,9 @@
                 if(b.y<0||b.y>canvas.height) { if(b.bounces>0){b.vy*=-1;b.bounces--;b.y=b.y<0?0:canvas.height;}else b.dead=true; }
                 
                 obstacles.forEach((obs, idx) => {
-                    let cx = b.x < obs.x ? obs.x : b.x > obs.x+obs.w ? obs.x+obs.w : b.x; let cy = b.y < obs.y ? obs.y : b.y > obs.y+obs.h ? obs.y+obs.h : b.y;
-                    if (Math.hypot(b.x-cx, b.y-cy) <= b.r) {
-                        if(!b.pierce){ if(b.wallDestroyer) { obstacles.splice(idx,1); b.dead=true; } else if(b.bounces>0) { let horiz = Math.abs(b.x-cx)>Math.abs(b.y-cy); if(horiz) b.vx*=-1; else b.vy*=-1; b.bounces--; } else b.dead=true; }
+                    let hit = (obs.type === 'tree') ? (Math.hypot(b.x - obs.x, b.y - obs.y) < b.r + obs.r) : circleRectCollide(b.x, b.y, b.r, obs.x, obs.y, obs.w, obs.h);
+                    if (hit) {
+                        if(!b.pierce){ if(b.wallDestroyer && obs.type==='wall') { obstacles.splice(idx,1); b.dead=true; } else if(b.bounces>0) { if(obs.type==='tree'){b.vx*=-1; b.vy*=-1;} else { let cX = Math.max(obs.x, Math.min(b.x, obs.x + obs.w)); let cY = Math.max(obs.y, Math.min(b.y, obs.y + obs.h)); if (Math.abs(b.x - cX) > Math.abs(b.y - cY)) b.vx *= -1; else b.vy *= -1; } b.bounces--; } else b.dead=true; }
                     }
                 });
 
@@ -222,16 +208,20 @@
 
         function drawTanks() {
             ctx.fillStyle = '#e8dcb8'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            obstacles.forEach(o => { ctx.fillStyle='#d35400'; ctx.beginPath(); ctx.roundRect(o.x,o.y,o.w,o.h,5); ctx.fill(); });
-            powerups.forEach(pu => { ctx.fillStyle='#34495e'; ctx.beginPath(); ctx.roundRect(pu.x-pu.r,pu.y-pu.r,pu.r*2,pu.r*2,4); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(pu.x,pu.y,pu.r*0.5,0,Math.PI*2); ctx.fill(); });
+            ctx.strokeStyle = '#d9ccaa'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+            for(let y = 30; y < canvas.height; y += 60) { ctx.beginPath(); for(let x = 0; x <= canvas.width + 40; x += 60) { ctx.quadraticCurveTo(x + 30, y + 20, x + 60, y); } ctx.stroke(); }
             
-            bullets.forEach(b => { ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(Math.atan2(b.vy,b.vx)); ctx.fillStyle='#f39c12'; ctx.beginPath(); ctx.roundRect(-8,-4,16,8,4); ctx.fill(); ctx.restore(); });
+            obstacles.forEach(o => { 
+                if(o.type==='wall') { ctx.fillStyle='#d35400'; ctx.beginPath(); ctx.roundRect(o.x,o.y,o.w,o.h,5); ctx.fill(); ctx.strokeStyle='#e67e22'; ctx.lineWidth=2; ctx.stroke(); }
+                else if(o.type==='tree') { ctx.save(); ctx.translate(o.x,o.y); ctx.fillStyle='#2ecc71'; ctx.beginPath(); for(let i=0;i<8;i++){ctx.rotate(Math.PI/4);ctx.lineTo(0,-o.r);ctx.lineTo(o.r/3,-o.r/3);} ctx.fill(); ctx.restore(); }
+            });
+            powerups.forEach(pu => { ctx.fillStyle='#34495e'; ctx.beginPath(); ctx.roundRect(pu.x-pu.r,pu.y-pu.r,pu.r*2,pu.r*2,4); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(pu.x,pu.y,pu.r*0.5,0,Math.PI*2); ctx.fill(); });
+            bullets.forEach(b => { ctx.save(); ctx.translate(b.x,b.y); ctx.rotate(Math.atan2(b.vy,b.vx)); ctx.fillStyle=b.pierce?'#8e44ad':'#f39c12'; ctx.beginPath(); ctx.roundRect(-8,-4,16,8,4); ctx.fill(); ctx.restore(); });
 
             players.forEach(p => {
                 if(p.isDead) return;
                 p.trails.forEach(t=>{ ctx.save(); ctx.translate(t.x,t.y); ctx.rotate(t.a); ctx.fillStyle=`rgba(0,0,0,${t.alpha*0.2})`; ctx.fillRect(-20,-24,40,8); ctx.fillRect(-20,16,40,8); ctx.restore(); });
                 ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle);
-                if(p.abilities.ghost>0) ctx.globalAlpha=0.5;
                 ctx.fillStyle='#2d3436'; ctx.beginPath(); ctx.roundRect(-24,-26,48,14,4); ctx.fill(); ctx.beginPath(); ctx.roundRect(-24,12,48,14,4); ctx.fill();
                 ctx.fillStyle=p.color; ctx.beginPath(); ctx.roundRect(-18,-18,36,36,8); ctx.fill(); ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.stroke();
                 ctx.fillStyle='#718093'; ctx.beginPath(); ctx.roundRect(0,-4,35,8,3); ctx.fill(); ctx.fillStyle='#2f3640'; ctx.beginPath(); ctx.arc(0,0,12,0,Math.PI*2); ctx.fill();
@@ -242,39 +232,41 @@
         // ==========================================
         //             2. SUMO GAME
         // ==========================================
-        const ARENA = { x: 512, y: 384, r: 300 };
+        const ARENA = { x: 512, y: 384, r: 320 }; let sumoTime = 0;
         
         function initSumo() {
-            players = [];
+            players = []; sumoTime = 0; ARENA.r = 320; powerups = [];
             for(let i=0; i<numPlayers; i++) {
                 let a = (Math.PI*2/numPlayers) * i;
-                players.push({ id: i, x: ARENA.x + Math.cos(a)*150, y: ARENA.y + Math.sin(a)*150, angle: a+Math.PI, color: P_COLORS[i], score: 0, isDead: false, vx: 0, vy: 0 });
+                players.push({ id: i, x: ARENA.x + Math.cos(a)*150, y: ARENA.y + Math.sin(a)*150, angle: a+Math.PI, rotDir: 1, color: P_COLORS[i], score: 0, isDead: false, vx: 0, vy: 0, superPush: false, isPushing: false });
             }
         }
 
         function updateSumo() {
-            let aliveCount = 0; let lastAlive = null;
+            sumoTime++; let aliveCount = 0; let lastAlive = null;
+
+            if(sumoTime === 1800 || (sumoTime > 1800 && sumoTime % 1800 === 0)) powerups.push({ x: 512 + (Math.random()*100-50), y: 384 + (Math.random()*100-50), r: 18, type: 'super' });
+            if(sumoTime > 10800) ARENA.r = Math.max(160, ARENA.r - 0.05); // Rimpicciolisci mappa dopo 3 min
 
             players.forEach((p, i) => {
                 if(p.isDead) return;
                 aliveCount++; lastAlive = p;
                 
                 let btn = buttons[i];
-                // ONE BUTTON LOGIC: SUMO
-                if (!btn.pressed) {
-                    p.angle += 0.05; // Ruota sempre e solo in un verso
-                } else {
-                    p.vx += Math.cos(p.angle) * 0.3; // Accelera meno
-                    p.vy += Math.sin(p.angle) * 0.3;
-                }
+                if (btn.justReleased) p.rotDir *= -1;
 
-                p.vx *= 0.94; p.vy *= 0.94; // Attrito alto
-                p.x += p.vx; p.y += p.vy;
+                p.isPushing = btn.pressed;
+                if (!p.isPushing) { p.angle += 0.04 * p.rotDir; } 
+                else { p.vx += Math.cos(p.angle) * 0.4; p.vy += Math.sin(p.angle) * 0.4; }
 
-                if (Math.hypot(p.x - ARENA.x, p.y - ARENA.y) > ARENA.r) p.isDead = true;
+                p.vx *= 0.92; p.vy *= 0.92; p.x += p.vx; p.y += p.vy;
+
+                // Eliminazione se fuori al 70% (distanza > raggio arena - 30% del raggio del corpo)
+                if (Math.hypot(p.x - ARENA.x, p.y - ARENA.y) > ARENA.r + 10) p.isDead = true; 
+
+                powerups.forEach((pu, idx) => { if(Math.hypot(p.x-pu.x, p.y-pu.y) < 40) { p.superPush = true; powerups.splice(idx,1); }});
             });
 
-            // Collisioni
             for(let i=0; i<players.length; i++) {
                 for(let j=i+1; j<players.length; j++) {
                     let p1 = players[i]; let p2 = players[j];
@@ -283,122 +275,173 @@
                     if(dist < 56) {
                         let overlap = 56 - dist; let nx = dx/dist; let ny = dy/dist;
                         p1.x -= nx*overlap/2; p1.y -= ny*overlap/2; p2.x += nx*overlap/2; p2.y += ny*overlap/2;
+                        
                         let dv = (p1.vx*nx + p1.vy*ny) - (p2.vx*nx + p2.vy*ny);
-                        p1.vx -= dv*nx*1.2; p1.vy -= dv*ny*1.2; p2.vx += dv*nx*1.2; p2.vy += dv*ny*1.2;
+                        let forceP1 = 1.2; let forceP2 = 1.2;
+                        
+                        // Meccanica Spinta / Super Spinta
+                        if(p1.isPushing && !p2.isPushing) forceP2 = 2.0;
+                        if(p2.isPushing && !p1.isPushing) forceP1 = 2.0;
+                        if(p1.superPush && p1.isPushing) { forceP2 = 6.0; p1.superPush = false; }
+                        if(p2.superPush && p2.isPushing) { forceP1 = 6.0; p2.superPush = false; }
+
+                        p1.vx -= dv*nx*forceP1; p1.vy -= dv*ny*forceP1; p2.vx += dv*nx*forceP2; p2.vy += dv*ny*forceP2;
                     }
                 }
             }
 
             if(aliveCount <= 1) {
                 if(lastAlive) { lastAlive.score++; updateScoreUI(); if(lastAlive.score >= MAX_SCORE) { endGame(lastAlive.id); return; } }
-                for(let i=0; i<numPlayers; i++) { let a = (Math.PI*2/numPlayers) * i; players[i].x = ARENA.x + Math.cos(a)*150; players[i].y = ARENA.y + Math.sin(a)*150; players[i].angle = a+Math.PI; players[i].vx=0; players[i].vy=0; players[i].isDead=false; }
+                // Round Reset (I cadaveri spariscono)
+                sumoTime = 0; ARENA.r = 320; powerups = [];
+                for(let i=0; i<numPlayers; i++) { let a = (Math.PI*2/numPlayers) * i; players[i].x = ARENA.x + Math.cos(a)*150; players[i].y = ARENA.y + Math.sin(a)*150; players[i].angle = a+Math.PI; players[i].vx=0; players[i].vy=0; players[i].isDead=false; players[i].superPush=false; }
             }
         }
 
         function drawSumo() {
             ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            ctx.beginPath(); ctx.arc(ARENA.x, ARENA.y, ARENA.r+15, 0, Math.PI*2); ctx.fillStyle='#e74c3c'; ctx.fill();
-            ctx.beginPath(); ctx.arc(ARENA.x, ARENA.y, ARENA.r, 0, Math.PI*2); ctx.fillStyle='#ecf0f1'; ctx.fill(); ctx.strokeStyle='#bdc3c7'; ctx.lineWidth=8; ctx.stroke();
-            
+            ctx.beginPath(); ctx.arc(ARENA.x, ARENA.y, ARENA.r+20, 0, Math.PI*2); ctx.fillStyle='#e74c3c'; ctx.fill();
+            ctx.beginPath(); ctx.arc(ARENA.x, ARENA.y, ARENA.r, 0, Math.PI*2); ctx.fillStyle='#ecf0f1'; ctx.fill(); ctx.strokeStyle='#bdc3c7'; ctx.lineWidth=10; ctx.stroke();
+            ctx.beginPath(); ctx.arc(ARENA.x, ARENA.y, 60, 0, Math.PI*2); ctx.strokeStyle='#bdc3c7'; ctx.lineWidth=4; ctx.stroke(); 
+
+            powerups.forEach(pu => { ctx.fillStyle='#f1c40f'; ctx.beginPath(); ctx.arc(pu.x,pu.y,pu.r,0,Math.PI*2); ctx.fill(); ctx.fillStyle='#fff'; ctx.font="20px Arial"; ctx.fillText("S", pu.x-7, pu.y+7); });
+
             players.forEach(p => {
-                if(p.isDead) return;
                 ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.angle);
-                ctx.beginPath(); ctx.arc(0,0,28,0,Math.PI*2); ctx.fillStyle='#2d3436'; ctx.fill(); ctx.strokeStyle=p.color; ctx.lineWidth=5; ctx.stroke();
-                ctx.beginPath(); ctx.roundRect(-15,-12,30,24,6); ctx.fillStyle=p.color; ctx.fill(); ctx.fillStyle='#f1c40f'; ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.fill();
+                
+                if (p.isDead) {
+                    ctx.globalAlpha = 0.5;
+                    ctx.fillStyle = '#bdc3c7'; ctx.beginPath(); ctx.arc(0,0,26,0,Math.PI*2); ctx.fill(); // Corpo morto
+                    ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.fillRect(-15, -4, 30, 8); // Mawashi morto
+                    ctx.fillStyle = '#2c3e50'; ctx.font = "bold 20px Arial"; ctx.fillText("X X", -16, 6); // Facci morta
+                } else {
+                    if (p.superPush) { ctx.shadowColor = '#f1c40f'; ctx.shadowBlur = 15; }
+                    
+                    // Braccia
+                    ctx.fillStyle = '#ffeaa7'; 
+                    if (p.isPushing) { ctx.beginPath(); ctx.roundRect(15, -25, 25, 12, 6); ctx.roundRect(15, 13, 25, 12, 6); ctx.fill(); } 
+                    else { ctx.beginPath(); ctx.roundRect(5, -25, 15, 12, 6); ctx.roundRect(5, 13, 15, 12, 6); ctx.fill(); }
+
+                    // Corpo Sumo
+                    ctx.beginPath(); ctx.arc(0,0,28,0,Math.PI*2); ctx.fillStyle='#ffeaa7'; ctx.fill(); ctx.strokeStyle=p.color; ctx.lineWidth=4; ctx.stroke();
+                    // Mawashi (Cintura)
+                    ctx.fillStyle='#2d3436'; ctx.beginPath(); ctx.fillRect(-10, -28, 20, 56);
+                    // Testa e capelli
+                    ctx.fillStyle='#ffeaa7'; ctx.beginPath(); ctx.arc(10,0,14,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='#2d3436'; ctx.beginPath(); ctx.arc(8,0,10,Math.PI/2, -Math.PI/2, true); ctx.fill();
+                }
                 ctx.restore();
             });
         }
 
         // ==========================================
-        //             3. SHAPES GAME (Nuovo!)
+        //             3. SHAPES GAME
         // ==========================================
-        let s_grid = []; let s_colors = []; let s_maxColorId = -1; let s_state = 'WAIT'; let s_timer = 0;
+        let s_grid = [], s_colors = [], s_maxColorId = -1, s_state = 'WAIT', s_timer = 0;
+        let s_locked = [];
 
-        function initShapes() {
-            players = []; for(let i=0; i<numPlayers; i++) players.push({ id: i, score: 0 });
-            generateShapesGrid();
-        }
+        function initShapes() { players = []; for(let i=0; i<numPlayers; i++) players.push({ id: i, score: 0, cursor: 0, lockTimer: 0, locked: false }); s_locked = []; generateShapesGrid(); }
 
         function generateShapesGrid() {
-            s_grid = []; let counts = [0,0,0,0];
-            // Griglia 7x9 (63 blocchi)
-            for(let r=0; r<7; r++) { s_grid[r] = []; for(let c=0; c<9; c++) { let cid = Math.floor(Math.random()*numPlayers); s_grid[r][c] = cid; counts[cid]++; } }
-            // Smoothing per creare "blob"
-            for(let i=0; i<3; i++) {
-                let newGrid = JSON.parse(JSON.stringify(s_grid)); counts = [0,0,0,0];
-                for(let r=0; r<7; r++) { for(let c=0; c<9; c++) {
-                    let neighbors = [];
-                    if(r>0) neighbors.push(s_grid[r-1][c]); if(r<6) neighbors.push(s_grid[r+1][c]); if(c>0) neighbors.push(s_grid[r][c-1]); if(c<8) neighbors.push(s_grid[r][c+1]);
-                    newGrid[r][c] = neighbors[Math.floor(Math.random()*neighbors.length)]; counts[newGrid[r][c]]++;
-                }}
-                s_grid = newGrid;
+            // Algoritmo di Flood Fill per Aree Contigue (Differenza 1-2 quadretti)
+            s_grid = Array(10).fill().map(() => Array(10).fill(-1));
+            let targets = [27, 25, 24, 24].sort(() => Math.random() - 0.5);
+            s_maxColorId = targets.indexOf(Math.max(...targets));
+            
+            let sizes = [0,0,0,0]; let fronts = [ [[0,0]], [[0,9]], [[9,0]], [[9,9]] ];
+            s_grid[0][0]=0; s_grid[0][9]=1; s_grid[9][0]=2; s_grid[9][9]=3; sizes=[1,1,1,1];
+            let empty = 96; let colorTurn = 0;
+
+            while(empty > 0) {
+                let c = colorTurn % 4;
+                if (sizes[c] < targets[c]) {
+                    let validFronts = [];
+                    for(let f of fronts[c]) {
+                        let r=f[0], col=f[1];
+                        if(r>0 && s_grid[r-1][col]===-1) validFronts.push([r-1,col]); if(r<9 && s_grid[r+1][col]===-1) validFronts.push([r+1,col]);
+                        if(col>0 && s_grid[r][col-1]===-1) validFronts.push([r,col-1]); if(col<9 && s_grid[r][col+1]===-1) validFronts.push([r,col+1]);
+                    }
+                    if(validFronts.length > 0) { let pick = validFronts[Math.floor(Math.random()*validFronts.length)]; if(s_grid[pick[0]][pick[1]] === -1) { s_grid[pick[0]][pick[1]] = c; fronts[c].push(pick); sizes[c]++; empty--; } }
+                }
+                colorTurn++;
             }
-            s_maxColorId = counts.indexOf(Math.max(...counts.slice(0,numPlayers)));
-            s_state = 'PLAY'; s_timer = 0;
+            // Riempi eventuali buchi
+            for(let r=0; r<10; r++) for(let c=0; c<10; c++) if(s_grid[r][c]===-1) { let n = (r>0&&s_grid[r-1][c]!==-1)?s_grid[r-1][c] : (r<9&&s_grid[r+1][c]!==-1)?s_grid[r+1][c] : 0; s_grid[r][c]=n; sizes[n]++; }
+            
+            players.forEach(p => { p.cursor = p.id; p.lockTimer = 0; p.locked = false; }); s_locked = []; s_state = 'PLAY'; s_timer = 0;
         }
 
         function updateShapes() {
             if(s_state === 'WAIT') { s_timer++; if(s_timer > 90) generateShapesGrid(); return; }
             
-            // Controlla chi preme per primo
-            for(let i=0; i<numPlayers; i++) {
-                if(buttons[i].justPressed) {
-                    if(i === s_maxColorId) { players[i].score++; } else { players[i].score = Math.max(0, players[i].score - 1); }
-                    updateScoreUI();
-                    if(players[i].score >= MAX_SCORE) { endGame(i); return; }
-                    s_state = 'WAIT'; s_timer = 0; break;
-                }
+            let allLocked = true;
+            players.forEach((p, i) => {
+                if(p.locked) return; allLocked = false;
+                let btn = buttons[i];
+                if (btn.justPressed) { p.cursor = (p.cursor + 1) % 4; p.lockTimer = 0; } // Cicla colore
+                else { p.lockTimer++; if(p.lockTimer > 70) { p.locked = true; s_locked.push(p); } } // Lock dopo 1.1s
+            });
+
+            if(allLocked) {
+                // Assegna punteggi a scalare per chi ha indovinato il colore max (3, 2, 1)
+                let pts = 3;
+                s_locked.forEach(p => { if(p.cursor === s_maxColorId) { p.score += pts; pts = Math.max(1, pts-1); } else { p.score = Math.max(0, p.score - 1); } });
+                updateScoreUI();
+                
+                let winner = players.find(p => p.score >= MAX_SCORE);
+                if(winner) { endGame(winner.id); return; }
+                s_state = 'WAIT'; s_timer = 0;
             }
         }
 
         function drawShapes() {
             ctx.fillStyle = '#ecf0f1'; ctx.fillRect(0,0,canvas.width,canvas.height);
-            let bSize = 60; let ox = (canvas.width - (9*bSize))/2; let oy = (canvas.height - (7*bSize))/2;
+            let bSize = 60; let ox = (canvas.width - (10*bSize))/2; let oy = (canvas.height - (10*bSize))/2;
             
-            // Sfondo griglia
-            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(ox-10, oy-10, 9*bSize+20, 7*bSize+20);
-            ctx.fillStyle = '#fff'; ctx.fillRect(ox, oy, 9*bSize, 7*bSize);
-
+            ctx.fillStyle = '#bdc3c7'; ctx.fillRect(ox-10, oy-10, 10*bSize+20, 10*bSize+20);
+            
             if (s_state === 'PLAY') {
-                for(let r=0; r<7; r++) {
-                    for(let c=0; c<9; c++) {
-                        ctx.fillStyle = P_COLORS[s_grid[r][c]]; ctx.globalAlpha = 0.8;
-                        ctx.fillRect(ox + c*bSize, oy + r*bSize, bSize, bSize); ctx.globalAlpha = 1;
-                        ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.strokeRect(ox + c*bSize, oy + r*bSize, bSize, bSize);
-                    }
-                }
+                // Disegna le aree piene accorpando i bordi
+                for(let r=0; r<10; r++) { for(let c=0; c<10; c++) {
+                    ctx.fillStyle = P_COLORS[s_grid[r][c]]; ctx.fillRect(ox + c*bSize, oy + r*bSize, bSize+1, bSize+1);
+                    ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 1;
+                    if(r>0 && s_grid[r][c] !== s_grid[r-1][c]) { ctx.beginPath(); ctx.moveTo(ox+c*bSize, oy+r*bSize); ctx.lineTo(ox+(c+1)*bSize, oy+r*bSize); ctx.stroke(); }
+                    if(c>0 && s_grid[r][c] !== s_grid[r][c-1]) { ctx.beginPath(); ctx.moveTo(ox+c*bSize, oy+r*bSize); ctx.lineTo(ox+c*bSize, oy+(r+1)*bSize); ctx.stroke(); }
+                }}
+
+                // Disegna Cursori Giocatori sui Colori Esterni
+                let cPos = [ {x:ox-60, y:oy+300}, {x:ox+660, y:oy+300}, {x:ox+300, y:oy-60}, {x:ox+300, y:oy+660} ];
+                cPos.forEach((pos, idx) => { ctx.fillStyle=P_COLORS[idx]; ctx.fillRect(pos.x-30, pos.y-30, 60, 60); ctx.strokeStyle='#000'; ctx.strokeRect(pos.x-30, pos.y-30, 60, 60); });
+
+                players.forEach(p => {
+                    let target = cPos[p.cursor];
+                    ctx.beginPath(); ctx.arc(target.x + (p.id*10 - 15), target.y + (p.id*10 - 15), 18, 0, Math.PI*2); ctx.fillStyle = p.color; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 3; ctx.stroke();
+                    if(!p.locked) { ctx.beginPath(); ctx.arc(target.x + (p.id*10 - 15), target.y + (p.id*10 - 15), 24, -Math.PI/2, -Math.PI/2 + (p.lockTimer/70)*Math.PI*2); ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 4; ctx.stroke(); } 
+                    else { ctx.fillStyle='#fff'; ctx.font="14px Arial"; ctx.fillText("OK", target.x+(p.id*10-25), target.y+(p.id*10-10)); }
+                });
             } else {
-                ctx.fillStyle = '#2c3e50'; ctx.font = "bold 50px Arial"; ctx.textAlign = "center";
-                ctx.fillText("PREPARATI...", canvas.width/2, canvas.height/2); ctx.textAlign = "left";
+                ctx.fillStyle = '#2c3e50'; ctx.font = "bold 50px Arial"; ctx.textAlign = "center"; ctx.fillText("SVELAMENTO...", canvas.width/2, canvas.height/2); ctx.textAlign = "left";
             }
         }
 
         // ==========================================
         //             CORE LOOP & UI
         // ==========================================
-        function startGame(gameType) {
-            currentState = gameType;
-            document.getElementById('menu-screen').classList.add('hidden'); document.getElementById('ui-layer').classList.remove('hidden');
-            if(gameType === STATE.TANKS) initTanks(); else if(gameType === STATE.SUMO) initSumo(); else if(gameType === STATE.SHAPES) initShapes();
-            updateScoreUI();
-        }
-
+        function startGame(gameType) { currentState = gameType; document.getElementById('menu-screen').classList.add('hidden'); document.getElementById('ui-layer').classList.remove('hidden'); if(gameType === STATE.TANKS) initTanks(); else if(gameType === STATE.SUMO) initSumo(); else if(gameType === STATE.SHAPES) initShapes(); updateScoreUI(); }
         function backToMenu() { currentState = STATE.MENU; document.getElementById('gameover-screen').classList.add('hidden'); document.getElementById('menu-screen').classList.remove('hidden'); }
 
         function drawCornerButtons() {
             buttons.forEach(b => {
                 if(!b.active) return;
                 ctx.beginPath(); ctx.arc(b.cx, b.cy, b.r, 0, Math.PI*2);
-                ctx.fillStyle = b.pressed ? b.color : 'rgba(255,255,255,0.1)'; ctx.fill();
-                ctx.strokeStyle = b.color; ctx.lineWidth = 6; ctx.stroke();
-                // Disegna icona dito (astratta)
-                ctx.fillStyle = b.pressed ? '#fff' : b.color; ctx.beginPath(); ctx.arc(b.cx, b.cy, 20, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = b.pressed ? '#bdc3c7' : b.color; ctx.fill();
+                ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.lineWidth = 8; ctx.stroke();
             });
         }
 
         function update() {
             if (currentState === STATE.TANKS) updateTanks(); else if (currentState === STATE.SUMO) updateSumo(); else if (currentState === STATE.SHAPES) updateShapes();
-            resetInputFrame(); // Reset degli input a fine frame
+            resetInputFrame(); 
         }
 
         function draw() {
